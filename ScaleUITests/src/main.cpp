@@ -2,6 +2,7 @@
 #include <Wire.h> 
 #include <LiquidCrystal_I2C.h>
 #include <TaskScheduler.h>
+#include <math.h>
 
 #define BUTTON_3    2 // GPIO34
 #define BUTTON_2    0 // GPIO23
@@ -30,6 +31,8 @@ unsigned long button3LastPress = 0;
 unsigned long debounceDelay = 200;
 unsigned int screenState = HOME;
 unsigned int numItems = 359;
+unsigned int numItemsSet = 1;
+unsigned int numItemsSetLength = 0;
 
 bool button3Press = false;
 
@@ -58,6 +61,8 @@ void loop()
 {
   userScheduler.execute();
 }
+
+char buffer[16];
 
 void drawScreen(void){
   lcd.clear();
@@ -96,6 +101,12 @@ void drawScreen(void){
       lcd.print("<   continue   >");
       break;
     case(MENU_NUMBER_SCREEN):
+      numItemsSetLength = (int)log10(numItemsSet) + 1;
+      sprintf(buffer, "%*d", 8, numItemsSet);
+      lcd.setCursor(0, 0);
+      lcd.print(buffer);
+      lcd.setCursor(0, 1);
+      lcd.print("-1     ok     +1");
       break;
     default:
       // Sleep function
@@ -127,9 +138,10 @@ void buttonPress_three(){
         drawUI.forceNextIteration();
         break;
       case(MENU_NUMBER_SCREEN):
+        Serial.println("Add");
+        numItemsSet++;
         break;
       default:
-        Serial.println("In One Sleep");
         // Sleep function
         screenState = HOME;
         drawUI.forceNextIteration();
@@ -154,8 +166,12 @@ void buttonPress_two(){
       case(MENU_SET_WEIGHT):
         break;
       case(MENU_SET_NUM):
+        screenState = MENU_NUMBER_SCREEN;
+        drawUI.forceNextIteration();
         break;
       case(MENU_NUMBER_SCREEN):
+        screenState = MENU_SET_NUM;
+        drawUI.forceNextIteration();
         break;
       default:
         // Sleep function
@@ -188,6 +204,12 @@ void buttonPress_one(){
         drawUI.forceNextIteration();
         break;
       case(MENU_NUMBER_SCREEN):
+        Serial.println("Minus");
+        if(numItemsSet > 0){
+          numItemsSet--;
+          drawUI.forceNextIteration();
+        }
+        drawUI.forceNextIteration();
         break;
       default:
         // Sleep function
