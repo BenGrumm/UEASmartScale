@@ -4,9 +4,15 @@
 #include <TaskScheduler.h>
 #include <math.h>
 
-#define BUTTON_3    2 // GPIO34
-#define BUTTON_2    0 // GPIO23
-#define BUTTON_1    4 // GPIO22
+// Ben Female ESP
+// #define BUTTON_3    2 // GPIO34
+// #define BUTTON_2    0 // GPIO23
+// #define BUTTON_1    4 // GPIO22
+
+// Ben Male ESP
+#define BUTTON_3    4 // GPIO34
+#define BUTTON_2    5 // GPIO23
+#define BUTTON_1    15 // GPIO22
 
 Scheduler userScheduler;
 
@@ -14,6 +20,9 @@ void buttonPress_one(void);
 void buttonPress_two(void);
 void buttonPress_three(void);
 void drawScreen(void);
+
+// Temp functions used in testing
+unsigned int getNumItems(void);
 
 LiquidCrystal_I2C lcd(0x27,20,4);  // set the LCD address to 0x27 for a 16 chars and 2 line display
 
@@ -30,11 +39,9 @@ unsigned long button2LastPress = 0;
 unsigned long button3LastPress = 0;
 unsigned long debounceDelay = 200;
 unsigned int screenState = HOME;
-unsigned int numItems = 359;
 unsigned int numItemsSet = 1;
-unsigned int numItemsSetLength = 0;
 
-bool button3Press = false;
+bool isFirstDraw = true;
 
 Task drawUI(TASK_SECOND * 1, TASK_FOREVER, &drawScreen);
 
@@ -43,6 +50,9 @@ void setup()
   lcd.init();                      // initialize the lcd 
   lcd.backlight();
   Serial.begin(9600);
+
+  // Use floating pin value as pseudo random seed
+  randomSeed(analogRead(0));
 
   pinMode(BUTTON_1, INPUT_PULLUP);     // Button Input
   attachInterrupt(digitalPinToInterrupt(BUTTON_1), buttonPress_one, FALLING);
@@ -57,65 +67,108 @@ void setup()
   drawUI.enable();
 }
 
-void loop()
-{
+void loop(){
   userScheduler.execute();
 }
 
 char buffer[16];
 
+unsigned int numItems = 359;
+unsigned int lastNumLength = 3;
+unsigned int numItemsSetLength = 0;
+unsigned int padding;
+unsigned int frontPadding;
+
 void drawScreen(void){
-  lcd.clear();
+  if(isFirstDraw){
+    lcd.clear();
+  }
   switch(screenState){
     case(HOME):
-      lcd.backlight();
-      lcd.setCursor(0, 0);
-      lcd.print("        ITEMS   ");
-      lcd.setCursor(3, 0);
-      lcd.print(String(numItems));
-      lcd.setCursor(0, 1);
-      lcd.print("zero  menu  disp");
+      if(isFirstDraw){
+        lcd.backlight();
+        lcd.setCursor(0, 1);
+        lcd.print("zero  menu  disp");
+        isFirstDraw = false;
+      }
+      numItems = getNumItems();
+      if(numItems < 10000000000){
+        numItemsSetLength = (int)log10(numItems) + 1;
+        padding = 16 - (numItemsSetLength + 6); // 16 num position on line - 6 = len(ITEMS) + " "
+        frontPadding = (int)(padding / 2);
+        if(numItemsSetLength != lastNumLength){
+          lcd.setCursor(0, 0);
+          lcd.print("                ");
+          lcd.setCursor(frontPadding + numItemsSetLength + 1, 0); // add 1 for the extra space between numbers and "ITEMS"
+          lcd.print("ITEMS");
+        }
+        lcd.setCursor(frontPadding, 0);
+        lcd.print(String(numItems));
+      }else{
+        lcd.setCursor(0, 0);
+        lcd.print("      ERROR      ");
+      }
       break;
     case(MENU_EXIT):
-      lcd.setCursor(0, 0);
-      lcd.print("      EXIT      ");
-      lcd.setCursor(0, 1);
-      lcd.print("<   continue   >");
+      if(isFirstDraw){
+        lcd.setCursor(0, 0);
+        lcd.print("      EXIT      ");
+        lcd.setCursor(0, 1);
+        lcd.print("<   continue   >");
+        isFirstDraw = false;
+      }
       break;
     case(MENU_SET_MIN):
-      lcd.setCursor(0, 0);
-      lcd.print("  SET MIN LEVL  ");
-      lcd.setCursor(0, 1);
-      lcd.print("<   continue   >");
+      if(isFirstDraw){
+        lcd.setCursor(0, 0);
+        lcd.print("  SET MIN LEVL  ");
+        lcd.setCursor(0, 1);
+        lcd.print("<   continue   >");
+        isFirstDraw = false;
+      }
       break;
     case(MENU_SET_WEIGHT):
-      lcd.setCursor(0, 0);
-      lcd.print("  SET  WEIGHT  ");
-      lcd.setCursor(0, 1);
-      lcd.print("<   continue   >");
+      if(isFirstDraw){
+        lcd.setCursor(0, 0);
+        lcd.print("  SET  WEIGHT  ");
+        lcd.setCursor(0, 1);
+        lcd.print("<   continue   >");
+        isFirstDraw = false;
+      }
       break;
     case(MENU_SET_NUM):
-      lcd.setCursor(0, 0);
-      lcd.print(" SET  NUM  PER ");
-      lcd.setCursor(0, 1);
-      lcd.print("<   continue   >");
+      if(isFirstDraw){
+        lcd.setCursor(0, 0);
+        lcd.print(" SET  NUM  PER ");
+        lcd.setCursor(0, 1);
+        lcd.print("<   continue   >");
+        isFirstDraw = false;
+      }
       break;
     case(MENU_NUMBER_SCREEN):
+      if(isFirstDraw){
+        lcd.setCursor(0, 1);
+        lcd.print("-1     ok     +1");
+        isFirstDraw = false;
+      }
       numItemsSetLength = (int)log10(numItemsSet) + 1;
       sprintf(buffer, "%*d", 8, numItemsSet);
       lcd.setCursor(0, 0);
       lcd.print(buffer);
-      lcd.setCursor(0, 1);
-      lcd.print("-1     ok     +1");
       break;
     default:
       // Sleep function
-      lcd.noBacklight();
+      if(isFirstDraw){
+        lcd.noBacklight();
+        isFirstDraw = false;
+      }
   }
 }
 
 void buttonPress_three(){
   if((millis() - button1LastPress) > debounceDelay){
+    Serial.println("But 3");
+    isFirstDraw = true;
     switch(screenState){
       case(HOME):
         screenState = SLEEP;
@@ -152,6 +205,8 @@ void buttonPress_three(){
 
 void buttonPress_two(){
   if((millis() - button2LastPress) > debounceDelay){
+    Serial.println("But 2");
+    isFirstDraw = true;
     switch(screenState){
       case(HOME):
         screenState = MENU_EXIT;
@@ -184,6 +239,8 @@ void buttonPress_two(){
 
 void buttonPress_one(){
   if((millis() - button3LastPress) > debounceDelay){
+    Serial.println("But 1");
+    isFirstDraw = true;
     switch(screenState){
       case(HOME):
         break;
@@ -217,5 +274,35 @@ void buttonPress_one(){
         drawUI.forceNextIteration();
     }
     button3LastPress = millis();
+  }
+}
+
+
+// TODO replace with proper functions
+
+unsigned int tempNum = 0;
+
+unsigned int getNumItems(void){
+  tempNum++;
+  if(tempNum < 3){
+    return 1;
+  }else if(tempNum < 6){
+    return 10;
+  }else if(tempNum < 9){
+    return 10000;
+  }else if(tempNum < 12){
+    return 100000;
+  }else if(tempNum < 15){
+    return 1000000;
+  }else if(tempNum < 18){
+    return 10000000;
+  }else if(tempNum < 21){
+    return 100000000;
+  }else if(tempNum < 24){
+    return 1000000000;
+  }else if(tempNum < 27){
+    return 10000000000;
+  }else{
+    return random(1, 100000000000);
   }
 }
