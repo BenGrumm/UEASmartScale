@@ -13,10 +13,13 @@ unsigned int calibrateState = CALIBRATE_ZERO;
 unsigned int numItemsSet = 1; // temp var for the num items in the MENU_NUMBER_SCREEN state
 
 bool isFirstDraw = true;
+bool displayGrams = false;
 
 Task drawUI(TASK_SECOND * 1, TASK_FOREVER, &drawScreen);
-Task zeroScale(TASK_IMMEDIATE, TASK_ONCE, &zeroTare);
-Task setKnownVal(TASK_IMMEDIATE, TASK_ONCE, &calibrateScale);
+Task zeroScale(TASK_MILLISECOND, TASK_ONCE, &zeroTare);
+Task setKnownVal(TASK_MILLISECOND, TASK_ONCE, &calibrateScale);
+Task setLocalNumItem(TASK_MILLISECOND, TASK_ONCE, &setLocalNumItemsPerWeightVal);
+Task setStorageNumItem(TASK_MILLISECOND, TASK_ONCE, &setStorageNumItemsPerWeightVal);
 
 LiquidCrystal_I2C lcd(0x27,20,4);  // set the LCD address to 0x27 for a 16 chars and 2 line display
 
@@ -45,6 +48,8 @@ void setupUI(Scheduler &userScheduler, int button1Pin, int button2Pin, int butto
 
     userScheduler.addTask(zeroScale); // enabled in interrupt
     userScheduler.addTask(setKnownVal);
+    userScheduler.addTask(setLocalNumItem);
+    userScheduler.addTask(setStorageNumItem);
 }
 
 // Buffer used for drawing to the LCD (16 chars wide)
@@ -69,7 +74,11 @@ void drawScreen(void){
     }
     switch(screenState){
         case(HOME):
-            numItems = getNumItems();
+            if(displayGrams){
+                numItems = (unsigned int) getWeightGrams();
+            }else{
+                numItems = getNumItems();
+            }
 
             // Write number first as this uses isFirstDraw var
             if(numItems < 10000000000){
@@ -83,7 +92,11 @@ void drawScreen(void){
                     lcd.setCursor(0, 0);
                     lcd.print("                ");
                     lcd.setCursor(frontPadding + numItemsSetLength + 1, 0); // add 1 for the extra space between numbers and "ITEMS"
-                    lcd.print("ITEMS");
+                    if(displayGrams){
+                        lcd.print("GRAMS");
+                    }else{
+                        lcd.print("ITEMS");
+                    }
                     lastNumLength = numItemsSetLength;
                 }
                 lcd.setCursor(frontPadding, 0);
@@ -177,6 +190,19 @@ void drawMenu(void){
         case(MENU_CALIBRATE_CONFIRM):
             drawCalibration();
             break;
+        case(MENU_DISPLAY_UNITS):
+            if(isFirstDraw){
+                lcd.setCursor(0, 0);
+                if(displayGrams){
+                    lcd.print("  DISPLAY  NUM  ");
+                }else{
+                    lcd.print(" DISPLAY  GRAMS ");
+                }
+                lcd.setCursor(0, 1);
+                lcd.print("<   continue   >");
+                isFirstDraw = false;
+            }
+            break;
     }
 }
 
@@ -233,7 +259,7 @@ void drawCalibration(void){
  * @brief Interrupt function for button three
  * 
  */
-void buttonPress_three(void){
+void IRAM_ATTR buttonPress_three(void){
     if((millis() - button3LastPress) > debounceDelay){
         Serial.println("But 3");
         isFirstDraw = true;
@@ -246,7 +272,7 @@ void buttonPress_three(void){
  * @brief Function called when the third button is pressed
  * 
  */
-void threePressed(void){
+void IRAM_ATTR threePressed(void){
     switch(screenState){
         case(HOME):
             screenState = SLEEP;
@@ -266,7 +292,7 @@ void threePressed(void){
  * @brief Function called when third button is pressed and the UI is in the menu state
  * 
  */
-void threeMenuPressed(void){
+void IRAM_ATTR threeMenuPressed(void){
     switch(menuState){
         case(MENU_EXIT):
             menuState = MENU_SET_MIN;
@@ -287,12 +313,17 @@ void threeMenuPressed(void){
         case(MENU_NUMBER_SCREEN):
             Serial.println("Add");
             numItemsSet++;
+            drawUI.forceNextIteration();
             break;
         case(MENU_CALIBRATE_SCALE):
-            menuState = MENU_EXIT;
+            menuState = MENU_DISPLAY_UNITS;
             break;
         case(MENU_CALIBRATE_CONFIRM):
             threeCalibrationPress();
+            break;
+        case(MENU_DISPLAY_UNITS):
+            menuState = MENU_EXIT;
+            drawUI.forceNextIteration();
             break;
     }
 }
@@ -301,7 +332,7 @@ void threeMenuPressed(void){
  * @brief Function called on button press 3 when the UI is in the calibration state
  * 
  */
-void threeCalibrationPress(void){
+void IRAM_ATTR threeCalibrationPress(void){
     switch(calibrateState){
         case(CALIBRATE_ZERO):
             break;
@@ -322,7 +353,7 @@ void threeCalibrationPress(void){
  * @brief Interrupt function for button two
  * 
  */
-void buttonPress_two(void){
+void IRAM_ATTR buttonPress_two(void){
     if((millis() - button2LastPress) > debounceDelay){
         Serial.println("But 2");
         isFirstDraw = true;
@@ -335,7 +366,7 @@ void buttonPress_two(void){
  * @brief Function called when the second button is pressed
  * 
  */
-void twoPressed(void){
+void IRAM_ATTR twoPressed(void){
     switch(screenState){
         case(HOME):
             screenState = MENU;
@@ -355,7 +386,7 @@ void twoPressed(void){
  * @brief Function called when second button is pressed and the UI is in the menu state
  * 
  */
-void twoMenuPressed(void){
+void IRAM_ATTR twoMenuPressed(void){
     switch(menuState){
         case(MENU_EXIT):
             screenState = HOME;
@@ -366,10 +397,14 @@ void twoMenuPressed(void){
         case(MENU_SET_WEIGHT):
             break;
         case(MENU_SET_NUM):
+            setLocalNumItem.setIterations(TASK_ONCE);
+            setLocalNumItem.enable();
             menuState = MENU_NUMBER_SCREEN;
             drawUI.forceNextIteration();
             break;
         case(MENU_NUMBER_SCREEN):
+            setStorageNumItem.setIterations(TASK_ONCE);
+            setStorageNumItem.enable();
             menuState = MENU_SET_NUM;
             drawUI.forceNextIteration();
             break;
@@ -380,6 +415,10 @@ void twoMenuPressed(void){
         case(MENU_CALIBRATE_CONFIRM):
             twoCalibrationPress();
             break;
+        case(MENU_DISPLAY_UNITS):
+            displayGrams = !displayGrams;
+            drawUI.forceNextIteration();
+            break;
     }
 }
 
@@ -387,7 +426,7 @@ void twoMenuPressed(void){
  * @brief Function called on button press 2 when the UI is in the calibration state
  * 
  */
-void twoCalibrationPress(void){
+void IRAM_ATTR twoCalibrationPress(void){
     switch(calibrateState){
         case(CALIBRATE_ZERO):
             calibrateState = CALIBRATE_SET_WEIGHT_PROMPT;
@@ -409,7 +448,6 @@ void twoCalibrationPress(void){
             calibrateState = CALIBRATE_ZERO;
             menuState = MENU_CALIBRATE_SCALE;
             // Calculate val
-            Serial.println("NE");
             setKnownVal.setIterations(TASK_ONCE);
             setKnownVal.enableIfNot();
             drawUI.forceNextIteration();
@@ -421,7 +459,7 @@ void twoCalibrationPress(void){
  * @brief Interrupt function for button one
  * 
  */
-void buttonPress_one(void){
+void IRAM_ATTR buttonPress_one(void){
     if((millis() - button3LastPress) > debounceDelay){
         Serial.println("But 1");
         isFirstDraw = true;
@@ -434,7 +472,7 @@ void buttonPress_one(void){
  * @brief Function called when the first button is pressed
  * 
  */
-void onePressed(void){
+void IRAM_ATTR onePressed(void){
     switch(screenState){
         case(HOME):
             break;
@@ -452,10 +490,10 @@ void onePressed(void){
  * @brief Function called when first button is pressed and the UI is in the menu state
  * 
  */
-void oneMenuPressed(void){
+void IRAM_ATTR oneMenuPressed(void){
     switch(menuState){
         case(MENU_EXIT):
-            menuState = MENU_CALIBRATE_SCALE;
+            menuState = MENU_DISPLAY_UNITS;
             drawUI.forceNextIteration();
             break;
         case(MENU_SET_MIN):
@@ -485,14 +523,18 @@ void oneMenuPressed(void){
         case(MENU_CALIBRATE_CONFIRM):
             oneCalibrationPress();
             break;
+        case(MENU_DISPLAY_UNITS):
+            menuState = MENU_CALIBRATE_SCALE;
+            drawUI.forceNextIteration();
+            break;
     }
-}   
+}
 
 /**
  * @brief Function called on button press 1 when the UI is in the calibration state
  * 
  */
-void oneCalibrationPress(void){
+void IRAM_ATTR oneCalibrationPress(void){
     switch(calibrateState){
         case(CALIBRATE_ZERO):
             break;
@@ -509,6 +551,21 @@ void oneCalibrationPress(void){
     }
 }
 
+/**
+ * @brief Retieve stored value of numItemsSet from the eeprom
+ * 
+ */
+void setLocalNumItemsPerWeightVal(void){
+    numItemsSet = getNumItemsPerWeightVal();
+}
+
+/**
+ * @brief Store the value of numItemsSet in the eeprom
+ * 
+ */
+void setStorageNumItemsPerWeightVal(void){
+    setNumItemsPerWeightVal(numItemsSet);
+}
 
 // TODO replace with proper functions
 

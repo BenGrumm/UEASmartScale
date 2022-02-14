@@ -17,6 +17,16 @@
 #define DOUT  32
 #define CLK  33
 
+#if (RH_PLATFORM == RH_PLATFORM_ESP8266)
+    // interrupt handler and related code must be in RAM on ESP8266,
+    // according to issue #46.
+    #define INTERRUPT_ATTR ICACHE_RAM_ATTR
+#elif (RH_PLATFORM == RH_PLATFORM_ESP32)
+    #define INTERRUPT_ATTR IRAM_ATTR 
+#else
+    #define INTERRUPT_ATTR
+#endif
+
 Scheduler userScheduler;
 
 void setup(){

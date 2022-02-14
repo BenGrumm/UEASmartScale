@@ -1,6 +1,16 @@
 #ifndef STORAGE_HPP
 #define STORAGE_HPP
 
+#include <Arduino.h>
+#include <Preferences.h>
+
+#define PREF_NAMESPACE "settings"
+
+#define SETTINGS_NUM_WEIGHT "NUM_WEIGHT"
+#define SETTINGS_CAL_VALUE "CAL_VALUE"
+#define SETTINGS_ZERO_FACTOR "ZERO_FACTOR"
+#define SETTINGS_NUM_VALUES_PER "NUM_VALUES_PER"
+
 // Load cell functions
 
 /**
@@ -41,5 +51,18 @@ void setZeroFactor(long zeroFactor);
  * @return long zero factor stored (if none default = 0)
  */
 long getZeroFactor(void);
+
+/**
+ * @brief Set the number of items per weight value
+ * 
+ * @param numItems num items to be stored
+ */
+void setNumItemsPerWeightVal(unsigned int numItems);
+/**
+ * @brief Get the number of items per weight value
+ * 
+ * @return unsigned int with number item per weight (if none stored default = 1)
+ */
+unsigned int getNumItemsPerWeightVal(void);
 
 #endif
