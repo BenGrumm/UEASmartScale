@@ -1,46 +1,6 @@
 #include "ui.hpp"
 #include "loadcell.hpp"
 
-// Non public forward declarations
-void drawScreen(void);
-void buttonPress_three(void);
-void buttonPress_two(void);
-void buttonPress_one(void);
-void drawMenu(void);
-void onePressed(void);
-void oneMenuPressed(void);
-void twoPressed(void);
-void twoMenuPressed(void);
-void threePressed(void);
-void threeMenuPressed(void);
-void drawCalibration(void);
-void oneCalibrationPress(void);
-void twoCalibrationPress(void);
-void threeCalibrationPress(void);
-
-// Temp testing forward declaration
-unsigned int getNumItems(void);
-
-#define MAX_LOAD_CELL_MASS 50 // The max rated weight for load cell * 10 so fp operations not done in irq functions
-
-// States for UI
-#define SLEEP 0
-#define HOME 1
-#define MENU 2
-
-#define MENU_EXIT 1
-#define MENU_SET_MIN 2
-#define MENU_SET_WEIGHT 3
-#define MENU_SET_NUM 4
-#define MENU_NUMBER_SCREEN 5
-#define MENU_CALIBRATE_SCALE 6
-#define MENU_CALIBRATE_CONFIRM 7
-
-#define CALIBRATE_ZERO 1
-#define CALIBRATE_SET_WEIGHT_PROMPT 2
-#define CALIBRATE_SET_WEIGHT 3
-#define CALIBRATE_PLACE_WEIGHT 4
-
 // vars for debouncing
 unsigned long button1LastPress = 0;
 unsigned long button2LastPress = 0;
@@ -55,8 +15,8 @@ unsigned int numItemsSet = 1; // temp var for the num items in the MENU_NUMBER_S
 bool isFirstDraw = true;
 
 Task drawUI(TASK_SECOND * 1, TASK_FOREVER, &drawScreen);
-Task zeroScale(TASK_MILLISECOND * 1, TASK_ONCE, &zeroTare);
-Task setKnownVal(TASK_MILLISECOND * 1, TASK_ONCE, &calibrateScale);
+Task zeroScale(TASK_IMMEDIATE, TASK_ONCE, &zeroTare);
+Task setKnownVal(TASK_IMMEDIATE, TASK_ONCE, &calibrateScale);
 
 LiquidCrystal_I2C lcd(0x27,20,4);  // set the LCD address to 0x27 for a 16 chars and 2 line display
 
@@ -68,8 +28,8 @@ void setupUI(Scheduler &userScheduler, int button1Pin, int button2Pin, int butto
     lcd.init();                      // initialize the lcd 
     lcd.backlight();
 
-    // Use floating pin value as pseudo random seed
-    randomSeed(analogRead(0));
+    // Use floating pin value as pseudo random seed (used in testing)
+    // randomSeed(analogRead(0));
 
     // Setup buttons and their interrupts
     pinMode(button1Pin, INPUT_PULLUP);
@@ -152,6 +112,10 @@ void drawScreen(void){
     }
 }
 
+/**
+ * @brief Function to draw the current menu state to lcd
+ * 
+ */
 void drawMenu(void){
     switch(menuState){
         case(MENU_EXIT):
@@ -216,6 +180,10 @@ void drawMenu(void){
     }
 }
 
+/**
+ * @brief Draw the calibration menu base on current state
+ * 
+ */
 void drawCalibration(void){
     switch(calibrateState){
         case(CALIBRATE_ZERO):
@@ -274,6 +242,10 @@ void buttonPress_three(void){
     }
 }
 
+/**
+ * @brief Function called when the third button is pressed
+ * 
+ */
 void threePressed(void){
     switch(screenState){
         case(HOME):
@@ -290,6 +262,10 @@ void threePressed(void){
     }
 }
 
+/**
+ * @brief Function called when third button is pressed and the UI is in the menu state
+ * 
+ */
 void threeMenuPressed(void){
     switch(menuState){
         case(MENU_EXIT):
@@ -321,6 +297,10 @@ void threeMenuPressed(void){
     }
 }
 
+/**
+ * @brief Function called on button press 3 when the UI is in the calibration state
+ * 
+ */
 void threeCalibrationPress(void){
     switch(calibrateState){
         case(CALIBRATE_ZERO):
@@ -351,6 +331,10 @@ void buttonPress_two(void){
     }
 }
 
+/**
+ * @brief Function called when the second button is pressed
+ * 
+ */
 void twoPressed(void){
     switch(screenState){
         case(HOME):
@@ -367,6 +351,10 @@ void twoPressed(void){
     }
 }
 
+/**
+ * @brief Function called when second button is pressed and the UI is in the menu state
+ * 
+ */
 void twoMenuPressed(void){
     switch(menuState){
         case(MENU_EXIT):
@@ -395,12 +383,17 @@ void twoMenuPressed(void){
     }
 }
 
+/**
+ * @brief Function called on button press 2 when the UI is in the calibration state
+ * 
+ */
 void twoCalibrationPress(void){
     switch(calibrateState){
         case(CALIBRATE_ZERO):
             calibrateState = CALIBRATE_SET_WEIGHT_PROMPT;
             // Zero now
-            zeroScale.enable();
+            zeroScale.setIterations(TASK_ONCE);
+            zeroScale.enableIfNot();
             drawUI.forceNextIteration();
             break;
         case(CALIBRATE_SET_WEIGHT_PROMPT):
@@ -416,7 +409,9 @@ void twoCalibrationPress(void){
             calibrateState = CALIBRATE_ZERO;
             menuState = MENU_CALIBRATE_SCALE;
             // Calculate val
-            setKnownVal.enable();
+            Serial.println("NE");
+            setKnownVal.setIterations(TASK_ONCE);
+            setKnownVal.enableIfNot();
             drawUI.forceNextIteration();
             break;
     }
@@ -435,6 +430,10 @@ void buttonPress_one(void){
     }
 }
 
+/**
+ * @brief Function called when the first button is pressed
+ * 
+ */
 void onePressed(void){
     switch(screenState){
         case(HOME):
@@ -449,6 +448,10 @@ void onePressed(void){
     }
 }
 
+/**
+ * @brief Function called when first button is pressed and the UI is in the menu state
+ * 
+ */
 void oneMenuPressed(void){
     switch(menuState){
         case(MENU_EXIT):
@@ -485,6 +488,10 @@ void oneMenuPressed(void){
     }
 }   
 
+/**
+ * @brief Function called on button press 1 when the UI is in the calibration state
+ * 
+ */
 void oneCalibrationPress(void){
     switch(calibrateState){
         case(CALIBRATE_ZERO):
