@@ -1,5 +1,4 @@
 #include "ui.hpp"
-#include "loadcell.hpp"
 
 // vars for debouncing
 unsigned long button1LastPress = 0;
@@ -11,7 +10,7 @@ unsigned int screenState = HOME; // current lcd state
 unsigned int menuState = MENU_EXIT;
 unsigned int calibrateState = CALIBRATE_ZERO;
 unsigned int weightSetState = WEIGHT_SET_CURRENT;
-unsigned int numItemsSet = 1; // temp var for the num items in the MENU_NUMBER_SCREEN state
+volatile unsigned int numItemsSet = 1; // temp var for the num items in the MENU_NUMBER_SCREEN state
 
 bool isFirstDraw = true;
 bool displayGrams = false;
@@ -19,7 +18,7 @@ bool displayGrams = false;
 Task drawUI(TASK_SECOND * 1, TASK_FOREVER, &drawScreen);
 Task zeroScale(TASK_IMMEDIATE, TASK_ONCE, &zeroTare);
 Task setKnownVal(TASK_IMMEDIATE, TASK_ONCE, &calibrateScale);
-Task setLocalNumItem(TASK_IMMEDIATE, TASK_ONCE, &setLocalNumItemsPerWeightVal);
+Task getLocalNumItem(TASK_IMMEDIATE, TASK_ONCE, &getLocalNumItemsPerWeightVal);
 Task setStorageNumItem(TASK_IMMEDIATE, TASK_ONCE, &setStorageNumItemsPerWeightVal);
 Task setReferenceWeight(TASK_IMMEDIATE, TASK_ONCE, &saveReferenceWeightToStorage);
 
@@ -50,7 +49,7 @@ void setupUI(Scheduler &userScheduler, int button1Pin, int button2Pin, int butto
 
     userScheduler.addTask(zeroScale); // enabled in interrupt
     userScheduler.addTask(setKnownVal);
-    userScheduler.addTask(setLocalNumItem);
+    userScheduler.addTask(getLocalNumItem);
     userScheduler.addTask(setStorageNumItem);
     userScheduler.addTask(setReferenceWeight);
 }
@@ -180,9 +179,9 @@ void drawMenu(void){
                 isFirstDraw = false;
             }
             numItemsSetLength = (int)log10(numItemsSet) + 1;
-            sprintf(buffer, "%*d", 8, numItemsSet);
-            lcd.setCursor(0, 0);
-            lcd.print(buffer);
+            lcd.setCursor((int)(16 - numItemsSetLength) / 2, 0);
+            Serial.println(numItemsSet);
+            lcd.print(numItemsSet);
             break;
         case(MENU_CALIBRATE_SCALE):
             if(isFirstDraw){
@@ -482,8 +481,8 @@ void IRAM_ATTR twoMenuPressed(void){
             twoMenuWeightSetPress();
             break;
         case(MENU_SET_NUM):
-            setLocalNumItem.setIterations(TASK_ONCE);
-            setLocalNumItem.enable();
+            getLocalNumItem.setIterations(TASK_ONCE);
+            getLocalNumItem.enable();
             menuState = MENU_NUMBER_SCREEN;
             drawUI.forceNextIteration();
             break;
@@ -619,8 +618,9 @@ void IRAM_ATTR oneMenuPressed(void){
             break;
         case(MENU_NUMBER_SCREEN):
             Serial.println("Minus");
-            if(numItemsSet > 0){
+            if(numItemsSet > 1){
                 numItemsSet--;
+                Serial.println(numItemsSet);
                 drawUI.forceNextIteration();
             }
             drawUI.forceNextIteration();
@@ -681,7 +681,7 @@ void IRAM_ATTR oneMenuWeightSetPress(void){
  * @brief Retieve stored value of numItemsSet from the eeprom
  * 
  */
-void setLocalNumItemsPerWeightVal(void){
+void getLocalNumItemsPerWeightVal(void){
     numItemsSet = getNumItemsPerWeightVal();
 }
 
@@ -698,39 +698,11 @@ void setStorageNumItemsPerWeightVal(void){
  * 
  */
 void saveReferenceWeightToStorage(void){
-    Serial.println("Saving");
     setReferenceWeightOfItems(getWeightGrams());
 }
 
-// TODO replace with proper functions
-
-unsigned int tempNum = 0;
-
-// unsigned int getNumItems(void){
-//     tempNum++;
-//     if(tempNum < 3){
-//         return 1;
-//     }else if(tempNum < 6){
-//         return 10;
-//     }else if(tempNum < 9){
-//         return 10000;
-//     }else if(tempNum < 12){
-//         return 100000;
-//     }else if(tempNum < 15){
-//         return 1000000;
-//     }else if(tempNum < 18){
-//         return 10000000;
-//     }else if(tempNum < 21){
-//         return 100000000;
-//     }else if(tempNum < 24){
-//         return 1000000000;
-//     }else if(tempNum < 27){
-//         return 10000000000;
-//     }else{
-//         return random(1, 100000000000);
-//     }
-// }
-
 unsigned int getNumItems(void){
-    return (unsigned int) getWeightGrams();
+    double ref = getReferenceWeightOfItemsGrams();
+    unsigned int numItems = getNumItemsPerWeightVal();
+    return (unsigned int) round(getWeightGrams() / (ref / numItems));
 }

@@ -7,6 +7,8 @@
 #include <TaskSchedulerDeclarations.h>
 #include <math.h>
 
+#include "loadcell.hpp"
+
 #define MAX_LOAD_CELL_MASS 50 // The max rated weight for load cell * 10 so fp operations not done in irq functions
 
 // States for UI
@@ -59,14 +61,12 @@ void drawCalibration(void);
 void oneCalibrationPress(void);
 void twoCalibrationPress(void);
 void threeCalibrationPress(void);
-void setLocalNumItemsPerWeightVal(void);
+void getLocalNumItemsPerWeightVal(void);
 void setStorageNumItemsPerWeightVal(void);
 void oneMenuWeightSetPress(void);
 void twoMenuWeightSetPress(void);
 void threeMenuWeightSetPress(void);
 void saveReferenceWeightToStorage(void);
-
-// Temp testing forward declaration
 unsigned int getNumItems(void);
 
 #endif
