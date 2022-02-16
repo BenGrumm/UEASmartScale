@@ -4,7 +4,7 @@
 #include <Arduino.h>
 #include "HX711.h"
 #include "storage.hpp"
-#include <TaskSchedulerDeclarations.h>
+#include "painlessMesh.h"
 
 /**
  * @brief Function used for setup of the load cell

@@ -1,7 +1,9 @@
 #include <Arduino.h>
-#include <TaskSchedulerDeclarations.h>
+// #include <TaskSchedulerDeclarations.h>
 #include "ui.hpp"
 #include "loadcell.hpp"
+#include "settings_server.hpp"
+#include "mesh_client.hpp"
 
 // Ben Female ESP
 // #define BUTTON_3    2 // GPIO34
@@ -22,10 +24,13 @@ Scheduler userScheduler;
 void setup(){
   Serial.begin(9600);
 
+  setupMesh(userScheduler);
   setupLC(DOUT, CLK);
   setupUI(userScheduler, BUTTON_1, BUTTON_2, BUTTON_3);
+  setupServer(getMeshAPIP());
+
 }
 
 void loop(){
-  userScheduler.execute();
+  loopMesh();
 }

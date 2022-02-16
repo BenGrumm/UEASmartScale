@@ -4,7 +4,7 @@
 #include <Arduino.h>
 #include <Wire.h> 
 #include <LiquidCrystal_I2C.h>
-#include <TaskSchedulerDeclarations.h>
+#include "painlessMesh.h"
 #include <math.h>
 
 #include "loadcell.hpp"
