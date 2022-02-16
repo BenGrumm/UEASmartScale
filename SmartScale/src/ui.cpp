@@ -208,6 +208,26 @@ void drawMenu(void){
                 isFirstDraw = false;
             }
             break;
+        case(MENU_SETTINGS_SERVER):
+            if(isFirstDraw){
+                lcd.setCursor(0, 0);
+                lcd.print("Settings  Server");
+                lcd.setCursor(0, 1);
+                lcd.print("<   continue   >");
+                isFirstDraw = false;
+            }
+            break;
+        case(MENU_SETTINGS_SERVER_CONFIRM):
+            if(isFirstDraw){
+                httpServerOn();
+                String ipAp = getAPIPStr();
+                lcd.setCursor((int)(16 - ipAp.length()) / 2, 0);
+                lcd.print(ipAp);
+                lcd.setCursor(0, 1);
+                lcd.print("      stop      ");
+                isFirstDraw = false;
+            }
+            break;
     }
 }
 
@@ -385,8 +405,14 @@ void IRAM_ATTR threeMenuPressed(void){
             threeCalibrationPress();
             break;
         case(MENU_DISPLAY_UNITS):
+            menuState = MENU_SETTINGS_SERVER;
+            drawUI.forceNextIteration();
+            break;
+        case(MENU_SETTINGS_SERVER):
             menuState = MENU_EXIT;
             drawUI.forceNextIteration();
+            break;
+        case(MENU_SETTINGS_SERVER_CONFIRM):
             break;
     }
 }
@@ -503,6 +529,15 @@ void IRAM_ATTR twoMenuPressed(void){
             displayGrams = !displayGrams;
             drawUI.forceNextIteration();
             break;
+        case(MENU_SETTINGS_SERVER):
+            menuState = MENU_SETTINGS_SERVER_CONFIRM;
+            drawUI.forceNextIteration();
+            break;
+        case(MENU_SETTINGS_SERVER_CONFIRM):
+            httpServerOff();
+            menuState = MENU_SETTINGS_SERVER;
+            drawUI.forceNextIteration();
+            break;
     }
 }
 
@@ -598,7 +633,7 @@ void IRAM_ATTR onePressed(void){
 void IRAM_ATTR oneMenuPressed(void){
     switch(menuState){
         case(MENU_EXIT):
-            menuState = MENU_DISPLAY_UNITS;
+            menuState = MENU_SETTINGS_SERVER;
             drawUI.forceNextIteration();
             break;
         case(MENU_SET_MIN):
@@ -635,6 +670,12 @@ void IRAM_ATTR oneMenuPressed(void){
         case(MENU_DISPLAY_UNITS):
             menuState = MENU_CALIBRATE_SCALE;
             drawUI.forceNextIteration();
+            break;
+        case(MENU_SETTINGS_SERVER):
+            menuState = MENU_DISPLAY_UNITS;
+            drawUI.forceNextIteration();
+            break;
+        case(MENU_SETTINGS_SERVER_CONFIRM):
             break;
     }
 }

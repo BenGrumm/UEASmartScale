@@ -15,6 +15,11 @@
 #include <HTTPClient.h>
 #include <ArduinoJson.h>
 
+#define AP_SERVER_PORT 80
+
 void setupServer(IPAddress meshAPIP);
+void httpServerOn(void);
+void httpServerOff(void);
+String getAPIPStr(void);
 
 #endif

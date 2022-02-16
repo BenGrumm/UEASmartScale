@@ -1,6 +1,6 @@
 #include "settings_server.hpp"
 
-AsyncWebServer server(80);
+AsyncWebServer server(AP_SERVER_PORT);
 IPAddress myAPIP(0,0,0,0);
 
 void setupServer(IPAddress meshAPIP){
@@ -15,5 +15,16 @@ void setupServer(IPAddress meshAPIP){
         }
     });
 
+}
+
+String getAPIPStr(void){
+    return myAPIP.toString() + ":" + String(AP_SERVER_PORT);
+}
+
+void httpServerOn(){
     server.begin();
+}
+
+void httpServerOff(){
+    server.end();
 }

@@ -8,6 +8,7 @@
 #include <math.h>
 
 #include "loadcell.hpp"
+#include "settings_server.hpp"
 
 #define MAX_LOAD_CELL_MASS 50 // The max rated weight for load cell * 10 so fp operations not done in irq functions
 
@@ -25,6 +26,8 @@
 #define MENU_CALIBRATE_CONFIRM 7
 #define MENU_DISPLAY_UNITS 8
 #define MENU_SET_WEIGHT_CONFIRM 9
+#define MENU_SETTINGS_SERVER 10
+#define MENU_SETTINGS_SERVER_CONFIRM 11
 
 #define CALIBRATE_ZERO 1
 #define CALIBRATE_SET_WEIGHT_PROMPT 2
