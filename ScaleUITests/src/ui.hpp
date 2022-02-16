@@ -22,11 +22,15 @@
 #define MENU_CALIBRATE_SCALE 6
 #define MENU_CALIBRATE_CONFIRM 7
 #define MENU_DISPLAY_UNITS 8
+#define MENU_SET_WEIGHT_CONFIRM 9
 
 #define CALIBRATE_ZERO 1
 #define CALIBRATE_SET_WEIGHT_PROMPT 2
 #define CALIBRATE_SET_WEIGHT 3
 #define CALIBRATE_PLACE_WEIGHT 4
+
+#define WEIGHT_SET_CURRENT 1
+#define WEIGHT_LIVE_SET 2
 
 /**
  * @brief Function used to setup the UI pins and tasks
@@ -44,6 +48,7 @@ void buttonPress_three(void);
 void buttonPress_two(void);
 void buttonPress_one(void);
 void drawMenu(void);
+void drawWeightSet(void);
 void onePressed(void);
 void oneMenuPressed(void);
 void twoPressed(void);
@@ -56,6 +61,10 @@ void twoCalibrationPress(void);
 void threeCalibrationPress(void);
 void setLocalNumItemsPerWeightVal(void);
 void setStorageNumItemsPerWeightVal(void);
+void oneMenuWeightSetPress(void);
+void twoMenuWeightSetPress(void);
+void threeMenuWeightSetPress(void);
+void saveReferenceWeightToStorage(void);
 
 // Temp testing forward declaration
 unsigned int getNumItems(void);

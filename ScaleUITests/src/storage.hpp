@@ -10,6 +10,7 @@
 #define SETTINGS_CAL_VALUE "CAL_VALUE"
 #define SETTINGS_ZERO_FACTOR "ZERO_FACTOR"
 #define SETTINGS_NUM_VALUES_PER "NUM_VALUES_PER"
+#define SETTINGS_WEIGHT_REFERENCE "WEIGHT_REF"
 
 // Load cell functions
 
@@ -64,5 +65,18 @@ void setNumItemsPerWeightVal(unsigned int numItems);
  * @return unsigned int with number item per weight (if none stored default = 1)
  */
 unsigned int getNumItemsPerWeightVal(void);
+
+/**
+ * @brief Set the weight of item(s) used for calculating weight of single item along with NumItemsPerWeight
+ * 
+ * @param itemsWeightGrams weight of the item or items in grams
+ */
+void setReferenceWeightOfItems(double itemsWeightGrams);
+/**
+ * @brief Get the weight of item(s) used for calculating weight of single item along with NumItemsPerWeight
+ * 
+ * @return double weight of the item(s) in grams (if none default = 10)
+ */
+double getReferenceWeightOfItemsGrams(void);
 
 #endif

@@ -10,16 +10,18 @@ unsigned long debounceDelay = 200;
 unsigned int screenState = HOME; // current lcd state
 unsigned int menuState = MENU_EXIT;
 unsigned int calibrateState = CALIBRATE_ZERO;
+unsigned int weightSetState = WEIGHT_SET_CURRENT;
 unsigned int numItemsSet = 1; // temp var for the num items in the MENU_NUMBER_SCREEN state
 
 bool isFirstDraw = true;
 bool displayGrams = false;
 
 Task drawUI(TASK_SECOND * 1, TASK_FOREVER, &drawScreen);
-Task zeroScale(TASK_MILLISECOND, TASK_ONCE, &zeroTare);
-Task setKnownVal(TASK_MILLISECOND, TASK_ONCE, &calibrateScale);
-Task setLocalNumItem(TASK_MILLISECOND, TASK_ONCE, &setLocalNumItemsPerWeightVal);
-Task setStorageNumItem(TASK_MILLISECOND, TASK_ONCE, &setStorageNumItemsPerWeightVal);
+Task zeroScale(TASK_IMMEDIATE, TASK_ONCE, &zeroTare);
+Task setKnownVal(TASK_IMMEDIATE, TASK_ONCE, &calibrateScale);
+Task setLocalNumItem(TASK_IMMEDIATE, TASK_ONCE, &setLocalNumItemsPerWeightVal);
+Task setStorageNumItem(TASK_IMMEDIATE, TASK_ONCE, &setStorageNumItemsPerWeightVal);
+Task setReferenceWeight(TASK_IMMEDIATE, TASK_ONCE, &saveReferenceWeightToStorage);
 
 LiquidCrystal_I2C lcd(0x27,20,4);  // set the LCD address to 0x27 for a 16 chars and 2 line display
 
@@ -50,6 +52,7 @@ void setupUI(Scheduler &userScheduler, int button1Pin, int button2Pin, int butto
     userScheduler.addTask(setKnownVal);
     userScheduler.addTask(setLocalNumItem);
     userScheduler.addTask(setStorageNumItem);
+    userScheduler.addTask(setReferenceWeight);
 }
 
 // Buffer used for drawing to the LCD (16 chars wide)
@@ -158,6 +161,9 @@ void drawMenu(void){
                 isFirstDraw = false;
             }
             break;
+        case(MENU_SET_WEIGHT_CONFIRM):
+            drawWeightSet();
+            break;
         case(MENU_SET_NUM):
             if(isFirstDraw){
                 lcd.setCursor(0, 0);
@@ -256,6 +262,61 @@ void drawCalibration(void){
 }
 
 /**
+ * @brief Draw the screen when in the weight set confirm state
+ * 
+ */
+void drawWeightSet(void){
+    switch(weightSetState){
+        case(WEIGHT_SET_CURRENT):
+            if(isFirstDraw){
+                double currentStored = getReferenceWeightOfItemsGrams();
+                // double currentStored = 10000000000000;
+                int len = (int)log10(currentStored) + 1;
+                if(len > 6 && len < 17){
+                    sprintf(buffer, "%.0fg", currentStored);
+                    lcd.setCursor((int)(16 - len) / 2, 0);
+                    lcd.print(buffer);
+                }else if(len < 17){
+                    // 16 chars on line 9 taken up by current g and a single " "
+                    // Gives padding at start for lcd
+                    int space = (int)(16 - 9 - len) / 2;
+                    lcd.setCursor(space, 0);
+                    sprintf(buffer, "Current %.0fg", currentStored);
+                    lcd.print(buffer);
+                }
+                lcd.setCursor(0, 1);
+                lcd.print("cancl      updte");
+                isFirstDraw = false;
+            }
+            break;
+        case(WEIGHT_LIVE_SET):
+            if(isFirstDraw){
+                lcd.setCursor(0, 1);
+                lcd.print("      set       ");
+                isFirstDraw = false;
+            }
+
+            double weightGrams = getWeightGrams();
+            int len = (int)log10(weightGrams) + 1;
+            if(len >= 15){
+                // ERROR Handling
+                lcd.setCursor(0, 0);
+                lcd.print("    ERR grams   ");
+            }else{
+
+                // Clear the row
+                lcd.setCursor(0, 0);
+                lcd.print("                ");
+                // Print current weight
+                lcd.setCursor((int)(16 - len - 1) / 2, 0);
+                sprintf(buffer, "%.0fg", weightGrams);
+                lcd.print(buffer);
+            }
+            break;
+    }
+}
+
+/**
  * @brief Interrupt function for button three
  * 
  */
@@ -302,6 +363,9 @@ void IRAM_ATTR threeMenuPressed(void){
             menuState = MENU_SET_WEIGHT;
             drawUI.forceNextIteration();
             break;
+        case(MENU_SET_WEIGHT_CONFIRM):
+            threeMenuWeightSetPress();
+            break;
         case(MENU_SET_WEIGHT):
             menuState = MENU_SET_NUM;
             drawUI.forceNextIteration();
@@ -345,6 +409,23 @@ void IRAM_ATTR threeCalibrationPress(void){
             }
             break;
         case(CALIBRATE_PLACE_WEIGHT):
+            break;
+    }
+}
+
+/**
+ * @brief Function called on button press 3 when UI is in Weight Menu Press
+ * 
+ */
+void IRAM_ATTR threeMenuWeightSetPress(void){
+    switch(weightSetState){
+        case(WEIGHT_SET_CURRENT):
+            // Confirm want to update
+            weightSetState = WEIGHT_LIVE_SET;
+            drawUI.forceNextIteration();
+            break;
+        case(WEIGHT_LIVE_SET):
+            // Do nothing
             break;
     }
 }
@@ -395,6 +476,10 @@ void IRAM_ATTR twoMenuPressed(void){
         case(MENU_SET_MIN):
             break;
         case(MENU_SET_WEIGHT):
+            menuState = MENU_SET_WEIGHT_CONFIRM;
+            break;
+        case(MENU_SET_WEIGHT_CONFIRM):
+            twoMenuWeightSetPress();
             break;
         case(MENU_SET_NUM):
             setLocalNumItem.setIterations(TASK_ONCE);
@@ -456,6 +541,27 @@ void IRAM_ATTR twoCalibrationPress(void){
 }
 
 /**
+ * @brief Function called on button press 2 when UI is in Weight Menu Press
+ * 
+ */
+void IRAM_ATTR twoMenuWeightSetPress(void){
+    switch(weightSetState){
+        case(WEIGHT_SET_CURRENT):
+            // Do nothing
+            break;
+        case(WEIGHT_LIVE_SET):
+            // Use current weight and save
+            weightSetState = WEIGHT_SET_CURRENT;
+            menuState = MENU_SET_WEIGHT;
+            // enable task
+            setReferenceWeight.setIterations(TASK_ONCE);
+            setReferenceWeight.enableIfNot();
+            drawUI.forceNextIteration();
+            break;
+    }
+}
+
+/**
  * @brief Interrupt function for button one
  * 
  */
@@ -503,6 +609,9 @@ void IRAM_ATTR oneMenuPressed(void){
         case(MENU_SET_WEIGHT):
             menuState = MENU_SET_MIN;
             drawUI.forceNextIteration();
+            break;
+        case(MENU_SET_WEIGHT_CONFIRM):
+            oneMenuWeightSetPress();
             break;
         case(MENU_SET_NUM):
             menuState = MENU_SET_WEIGHT;
@@ -552,6 +661,23 @@ void IRAM_ATTR oneCalibrationPress(void){
 }
 
 /**
+ * @brief Function called on button press 1 when UI is in Weight Menu Press
+ * 
+ */
+void IRAM_ATTR oneMenuWeightSetPress(void){
+    switch(weightSetState){
+        case(WEIGHT_SET_CURRENT):
+            // Cancel and return
+            menuState = MENU_SET_WEIGHT;
+            drawUI.forceNextIteration();
+            break;
+        case(WEIGHT_LIVE_SET):
+            // Do nothing
+            break;
+    }
+}
+
+/**
  * @brief Retieve stored value of numItemsSet from the eeprom
  * 
  */
@@ -565,6 +691,15 @@ void setLocalNumItemsPerWeightVal(void){
  */
 void setStorageNumItemsPerWeightVal(void){
     setNumItemsPerWeightVal(numItemsSet);
+}
+
+/**
+ * @brief Save the current weight as the stored value
+ * 
+ */
+void saveReferenceWeightToStorage(void){
+    Serial.println("Saving");
+    setReferenceWeightOfItems(getWeightGrams());
 }
 
 // TODO replace with proper functions

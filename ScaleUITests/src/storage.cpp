@@ -66,7 +66,6 @@ void setNumItemsPerWeightVal(unsigned int numItems){
     // Open namespace for read and write
     preferences.begin(PREF_NAMESPACE, false);
 
-    Serial.println("Writing To Mem");
     preferences.putUInt(SETTINGS_NUM_VALUES_PER, numItems);
 
     preferences.end();
@@ -77,6 +76,26 @@ unsigned int getNumItemsPerWeightVal(void){
     preferences.begin(PREF_NAMESPACE, true);
 
     unsigned int val = preferences.getUInt(SETTINGS_NUM_VALUES_PER, 1);
+
+    preferences.end();
+
+    return val;
+}
+
+void setReferenceWeightOfItems(double itemsWeightGrams){
+    // Open namespace for read and write
+    preferences.begin(PREF_NAMESPACE, false);
+
+    preferences.putDouble(SETTINGS_WEIGHT_REFERENCE, itemsWeightGrams);
+
+    preferences.end();
+}
+
+double getReferenceWeightOfItemsGrams(void){
+    // Open namespace for read and write
+    preferences.begin(PREF_NAMESPACE, true);
+
+    double val = preferences.getDouble(SETTINGS_WEIGHT_REFERENCE, 10);
 
     preferences.end();
 
