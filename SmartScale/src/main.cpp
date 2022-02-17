@@ -1,5 +1,4 @@
 #include <Arduino.h>
-// #include <TaskSchedulerDeclarations.h>
 #include "ui.hpp"
 #include "loadcell.hpp"
 #include "settings_server.hpp"
@@ -26,11 +25,13 @@ void setup(){
 
   setupMesh(userScheduler);
   setupLC(DOUT, CLK);
+  // LCD uses defualt i2c pins
   setupUI(userScheduler, BUTTON_1, BUTTON_2, BUTTON_3);
   setupServer(getMeshAPIP());
 
 }
 
 void loop(){
+  // This will update the mesh which also updates the scheduler that is passed
   loopMesh();
 }

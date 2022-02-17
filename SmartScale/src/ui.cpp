@@ -101,9 +101,11 @@ void drawScreen(void){
                     }
                     lastNumLength = numItemsSetLength;
                 }
+                // Draw updated number every time
                 lcd.setCursor(frontPadding, 0);
                 lcd.print(String(numItems));
             }else{
+                // 10000000000 should be grams or num this is too many
                 lcd.setCursor(0, 0);
                 lcd.print("      ERROR      ");
             }
@@ -615,6 +617,9 @@ void IRAM_ATTR buttonPress_one(void){
 void IRAM_ATTR onePressed(void){
     switch(screenState){
         case(HOME):
+            // zero scale
+            zeroScale.setIterations(TASK_ONCE);
+            zeroScale.enableIfNot();
             break;
         case(MENU):
             oneMenuPressed();
@@ -742,6 +747,11 @@ void saveReferenceWeightToStorage(void){
     setReferenceWeightOfItems(getWeightGrams());
 }
 
+/**
+ * @brief Function to calculate the number of objects on scale from weight in grams and the reference weight and num items stored in memory
+ * 
+ * @return unsigned int number of items on the scale
+ */
 unsigned int getNumItems(void){
     double ref = getReferenceWeightOfItemsGrams();
     unsigned int numItems = getNumItemsPerWeightVal();

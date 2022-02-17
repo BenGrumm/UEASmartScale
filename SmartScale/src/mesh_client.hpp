@@ -24,9 +24,26 @@
 
 #define HOSTNAME "HTTP_BRIDGE"
 
+/**
+ * @brief Function to set up the devices mesh client
+ * 
+ * @param userScheduler the scheduler that the mesh will update on every loop
+ */
 void setupMesh(Scheduler &userScheduler);
+
+/**
+ * @brief Get the Mesh APIP object
+ * 
+ * @return IPAddress that is used by the mesh
+ */
 IPAddress getMeshAPIP(void);
+
+/**
+ * @brief Function to call in the arduino loop method
+ * 
+ */
 void loopMesh(void);
+
 void receivedCallback(const uint32_t &from, const String &msg);
 
 #endif

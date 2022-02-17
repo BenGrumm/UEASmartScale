@@ -47,7 +47,7 @@
  */
 void setupUI(Scheduler &userScheduler, int button1Pin, int button2Pin, int button3Pin);
 
-// Non public forward declarations
+// Non publicly used forward declarations
 void drawScreen(void);
 void buttonPress_three(void);
 void buttonPress_two(void);

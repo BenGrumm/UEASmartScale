@@ -16,15 +16,21 @@ void setupMesh(Scheduler &userScheduler){
     // mesh.stationManual(STATION_SSID, STATION_PASSWORD);
     // mesh.setHostname(HOSTNAME);
     // Bridge node, should (in most cases) be a root node. See [the wiki](https://gitlab.com/painlessMesh/painlessMesh/wikis/Possible-challenges-in-mesh-formation) for some background
-    // mesh.setRoot(true);
+    mesh.setRoot(true);
     // This node and all other nodes should ideally know the mesh contains a root, so call this on all nodes
-    // mesh.setContainsRoot(true);
+    mesh.setContainsRoot(true);
 }
 
 IPAddress getMeshAPIP(void){
     return IPAddress(mesh.getAPIP());
 }
 
+/**
+ * @brief Callback used by the mesh when it recieves a message
+ * 
+ * @param from id of the message sender
+ * @param msg message from the sender
+ */
 void receivedCallback(const uint32_t &from, const String &msg){
   Serial.printf("bridge: Received from %u msg=%s\n", from, msg.c_str());
 }
