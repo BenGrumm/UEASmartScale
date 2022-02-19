@@ -3,6 +3,7 @@
 #include "loadcell.hpp"
 #include "settings_server.hpp"
 #include "mesh_client.hpp"
+#include "http_requests.hpp"
 
 // Ben Female ESP
 // #define BUTTON_3    2 // GPIO34
@@ -28,7 +29,10 @@ void setup(){
   // LCD uses defualt i2c pins
   setupUI(userScheduler, BUTTON_1, BUTTON_2, BUTTON_3);
   setupServer(getMeshAPIP());
+  setupHTTP(userScheduler);
 
+  Serial.print("setup() running on core ");
+  Serial.println(xPortGetCoreID());
 }
 
 void loop(){
