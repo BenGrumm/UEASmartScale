@@ -7,8 +7,8 @@ void setupLC(unsigned int dataPin, unsigned int clkPin){
     scale.begin(dataPin, clkPin);
 
     // Retrieve stored vals (if any)
-    long zeroFac = getZeroFactor();
-    float calVal = getCalibrationVal();
+    long zeroFac = deviceSettings.zeroFactor;
+    float calVal = deviceSettings.calibrationVal;
 
     Serial.print("Zero Factor = ");
     Serial.println(zeroFac);

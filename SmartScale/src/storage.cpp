@@ -1,21 +1,133 @@
 #include "storage.hpp"
 
 Preferences preferences;
+Settings deviceSettings;
 
-void saveWeight(double weight){
+void setupStorage(void){
+    preferences.begin(PREF_NAMESPACE, true);
+
+    // Assign all vars from storage to a struct
+    deviceSettings.calibrationVal = preferences.getFloat(SETTINGS_CAL_VALUE, 1);
+    deviceSettings.numItemsPerWeight = preferences.getUInt(SETTINGS_NUM_VALUES_PER, 1);
+    deviceSettings.referenceWeight = preferences.getDouble(SETTINGS_WEIGHT_REFERENCE, 10);
+    deviceSettings.zeroFactor = preferences.getLong(SETTINGS_ZERO_FACTOR, 0);
+
+    deviceSettings.username = preferences.getString(SETTINGS_SERVER_USERNAME, "Ben12");
+    deviceSettings.password = preferences.getString(SETTINGS_SERVER_PASSWORD, "test");
+    deviceSettings.jwt = preferences.getString(SETTINGS_JWT, "");
+
+    deviceSettings.WIFISSID = preferences.getString(SETTINGS_WIFI_SSID, "");
+    deviceSettings.WIFIPassword = preferences.getString(SETTINGS_WIFI_PASSWORD, "");
+
+    preferences.end();
+
+    // If debug needed
+    // Serial.println("Settings");
+    // Serial.print("Cal Val ");Serial.println(deviceSettings.calibrationVal);
+    // Serial.print("Num Items Per ");Serial.println(deviceSettings.numItemsPerWeight);
+    // Serial.print("Ref Weight ");Serial.println(deviceSettings.referenceWeight);
+    // Serial.print("Zero ");Serial.println(deviceSettings.zeroFactor);
+}
+
+void setSSID(String SSID){
     // Open namespace for read and write
     preferences.begin(PREF_NAMESPACE, false);
 
-    preferences.putDouble(SETTINGS_NUM_WEIGHT, weight);
+    deviceSettings.WIFISSID = SSID;
+    preferences.putString(SETTINGS_WIFI_SSID, SSID);
 
     preferences.end();
 }
 
-double getWeight(void){
-    // Open namespace for read only
+String getSSIDMem(void){
+    // Open namespace for read
     preferences.begin(PREF_NAMESPACE, true);
 
-    double val = preferences.getDouble(SETTINGS_NUM_WEIGHT, 0);
+    String val = preferences.getString(SETTINGS_WIFI_SSID, "");
+
+    preferences.end();
+
+    return val;
+}
+
+void setWIFIPassword(String password){
+    // Open namespace for read and write
+    preferences.begin(PREF_NAMESPACE, false);
+
+    deviceSettings.WIFIPassword = password;
+    preferences.putString(SETTINGS_WIFI_PASSWORD, password);
+
+    preferences.end();
+}
+
+String getWIFIPasswordMem(void){
+    // Open namespace for read
+    preferences.begin(PREF_NAMESPACE, true);
+
+    String val = preferences.getString(SETTINGS_WIFI_SSID, "");
+
+    preferences.end();
+
+    return val;
+}
+
+void setUsername(String username){
+    // Open namespace for read and write
+    preferences.begin(PREF_NAMESPACE, false);
+
+    deviceSettings.username = username;
+    preferences.putString(SETTINGS_SERVER_USERNAME, username);
+
+    preferences.end();
+}
+
+String getUsernameMem(void){
+    // Open namespace for read
+    preferences.begin(PREF_NAMESPACE, true);
+
+    String val = preferences.getString(SETTINGS_SERVER_USERNAME, "");
+
+    preferences.end();
+
+    return val;
+}
+
+void setPassword(String password){
+    // Open namespace for read and write
+    preferences.begin(PREF_NAMESPACE, false);
+
+    deviceSettings.password = password;
+    preferences.putString(SETTINGS_SERVER_PASSWORD, password);
+
+    preferences.end();
+}
+
+String getPasswordMem(void){
+    // Open namespace for read
+    preferences.begin(PREF_NAMESPACE, true);
+
+    String val = preferences.getString(SETTINGS_SERVER_PASSWORD, "");
+
+    preferences.end();
+
+    return val;
+}
+
+void setJWT(String jwt){
+    // Open namespace for read and write
+    preferences.begin(PREF_NAMESPACE, false);
+
+    deviceSettings.jwt = jwt;
+    preferences.putString(SETTINGS_JWT, jwt);
+
+    preferences.end();
+}
+
+String getJWTMem(void){
+    // Open namespace for read
+    preferences.begin(PREF_NAMESPACE, true);
+
+    String val = preferences.getString(SETTINGS_JWT, "");
 
     preferences.end();
 
@@ -26,12 +138,13 @@ void setCalibrationVal(float calVal){
     // Open namespace for read and write
     preferences.begin(PREF_NAMESPACE, false);
 
+    deviceSettings.calibrationVal = calVal;
     preferences.putFloat(SETTINGS_CAL_VALUE, calVal);
 
     preferences.end();
 }
 
-float getCalibrationVal(void){
+float getCalibrationValMem(void){
     // Open namespace for read
     preferences.begin(PREF_NAMESPACE, true);
 
@@ -46,12 +159,13 @@ void setZeroFactor(long zeroFactor){
     // Open namespace for read and write
     preferences.begin(PREF_NAMESPACE, false);
 
+    deviceSettings.zeroFactor = zeroFactor;
     preferences.putLong(SETTINGS_ZERO_FACTOR, zeroFactor);
 
     preferences.end();
 }
 
-long getZeroFactor(void){
+long getZeroFactorMem(void){
     // Open namespace for read
     preferences.begin(PREF_NAMESPACE, true);
 
@@ -66,12 +180,13 @@ void setNumItemsPerWeightVal(unsigned int numItems){
     // Open namespace for read and write
     preferences.begin(PREF_NAMESPACE, false);
 
+    deviceSettings.numItemsPerWeight = numItems;
     preferences.putUInt(SETTINGS_NUM_VALUES_PER, numItems);
 
     preferences.end();
 }
 
-unsigned int getNumItemsPerWeightVal(void){
+unsigned int getNumItemsPerWeightValMem(void){
     // Open namespace for read
     preferences.begin(PREF_NAMESPACE, true);
 
@@ -86,16 +201,37 @@ void setReferenceWeightOfItems(double itemsWeightGrams){
     // Open namespace for read and write
     preferences.begin(PREF_NAMESPACE, false);
 
+    deviceSettings.referenceWeight = itemsWeightGrams;
     preferences.putDouble(SETTINGS_WEIGHT_REFERENCE, itemsWeightGrams);
 
     preferences.end();
 }
 
-double getReferenceWeightOfItemsGrams(void){
+double getReferenceWeightOfItemsGramsMem(void){
     // Open namespace for read and write
     preferences.begin(PREF_NAMESPACE, true);
 
     double val = preferences.getDouble(SETTINGS_WEIGHT_REFERENCE, 10);
+
+    preferences.end();
+
+    return val;
+}
+
+void saveWeight(double weight){
+    // Open namespace for read and write
+    preferences.begin(PREF_NAMESPACE, false);
+
+    preferences.putDouble(SETTINGS_NUM_WEIGHT, weight);
+
+    preferences.end();
+}
+
+double getWeightMem(void){
+    // Open namespace for read only
+    preferences.begin(PREF_NAMESPACE, true);
+
+    double val = preferences.getDouble(SETTINGS_NUM_WEIGHT, 0);
 
     preferences.end();
 

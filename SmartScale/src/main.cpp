@@ -24,6 +24,8 @@ Scheduler userScheduler;
 void setup(){
   Serial.begin(9600);
 
+  setupStorage(); // Do storage first as settings used elsewhere
+
   setupMesh(userScheduler);
   setupLC(DOUT, CLK);
   // LCD uses defualt i2c pins

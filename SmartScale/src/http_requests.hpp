@@ -5,8 +5,8 @@
 #include <ArduinoJson.h>
 #include <WiFi.h>
 #include "painlessMesh.h"
+#include "storage.hpp"
 
-const String SERVER_IP = "http://0.0.0.0:8000";
 
 void setupHTTP(Scheduler &userScheduler);
 bool authorise(void);

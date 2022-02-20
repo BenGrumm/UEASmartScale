@@ -290,7 +290,7 @@ void drawWeightSet(void){
     switch(weightSetState){
         case(WEIGHT_SET_CURRENT):
             if(isFirstDraw){
-                double currentStored = getReferenceWeightOfItemsGrams();
+                double currentStored = deviceSettings.referenceWeight;
                 // double currentStored = 10000000000000;
                 int len = (int)log10(currentStored) + 1;
                 if(len > 6 && len < 17){
@@ -728,7 +728,7 @@ void IRAM_ATTR oneMenuWeightSetPress(void){
  * 
  */
 void getLocalNumItemsPerWeightVal(void){
-    numItemsSet = getNumItemsPerWeightVal();
+    numItemsSet = deviceSettings.numItemsPerWeight;
 }
 
 /**
@@ -753,7 +753,7 @@ void saveReferenceWeightToStorage(void){
  * @return unsigned int number of items on the scale
  */
 unsigned int getNumItems(void){
-    double ref = getReferenceWeightOfItemsGrams();
-    unsigned int numItems = getNumItemsPerWeightVal();
+    double ref = deviceSettings.referenceWeight;
+    unsigned int numItems = deviceSettings.numItemsPerWeight;
     return (unsigned int) round(getWeightGrams() / (ref / numItems));
 }
