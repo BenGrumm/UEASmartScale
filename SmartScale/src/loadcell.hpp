@@ -56,4 +56,6 @@ void calibrateScale(void);
  */
 void setKnownWeight(unsigned int knownVal);
 
+void checkNumItemsAndUpdate(void);
+
 #endif
