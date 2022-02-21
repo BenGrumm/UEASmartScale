@@ -10,6 +10,8 @@
 
 void setupHTTP(Scheduler &userScheduler);
 bool authorise(void);
-void tryConnect(void* args);
+void uploadSettings(void* args);
+void addUpdatedSettings(JsonObject scaleSettings);
+bool updateSettings(void);
 
 #endif

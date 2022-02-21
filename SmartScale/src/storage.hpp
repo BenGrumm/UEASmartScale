@@ -3,8 +3,11 @@
 
 #include <Arduino.h>
 #include <Preferences.h>
+#include "mesh_client.hpp"
 
 #define PREF_NAMESPACE "settings"
+
+#define INITIALISATION "DEVICE_INITIALISATION"
 
 #define SETTINGS_WIFI_SSID "WIFI_SSID"
 #define SETTINGS_WIFI_PASSWORD "WIFI_PASSWORD"
@@ -19,6 +22,8 @@
 #define SETTINGS_NUM_VALUES_PER "NUM_VALUES_PER"
 #define SETTINGS_WEIGHT_REFERENCE "WEIGHT_REF"
 
+#define SETTINGS_BRIDGE_ID "BRIDGE_ID"
+
 struct Settings{
     float calibrationVal;
     long zeroFactor;
@@ -31,6 +36,10 @@ struct Settings{
 
     String WIFISSID;
     String WIFIPassword;
+
+    uint32_t bridgeID;
+    
+    bool initialisation;
 };
 
 extern Settings deviceSettings;
@@ -40,6 +49,12 @@ extern Settings deviceSettings;
  * 
  */
 void setupStorage(void);
+
+
+// Bridge ID
+void setBridgeID(uint32_t id);
+uint32_t getBridgeIDMem(void);
+
 
 
 // WIFI Login

@@ -19,6 +19,8 @@ void setupStorage(void){
     deviceSettings.WIFISSID = preferences.getString(SETTINGS_WIFI_SSID, "");
     deviceSettings.WIFIPassword = preferences.getString(SETTINGS_WIFI_PASSWORD, "");
 
+    deviceSettings.initialisation = preferences.getBool(INITIALISATION, true);
+
     preferences.end();
 
     // If debug needed
@@ -27,6 +29,27 @@ void setupStorage(void){
     // Serial.print("Num Items Per ");Serial.println(deviceSettings.numItemsPerWeight);
     // Serial.print("Ref Weight ");Serial.println(deviceSettings.referenceWeight);
     // Serial.print("Zero ");Serial.println(deviceSettings.zeroFactor);
+}
+
+void setBridgeID(uint32_t id){
+    // Open namespace for read and write
+    preferences.begin(PREF_NAMESPACE, false);
+
+    deviceSettings.bridgeID = id;
+    preferences.putUInt(SETTINGS_BRIDGE_ID, id);
+
+    preferences.end();
+}
+
+uint32_t getBridgeIDMem(void){
+    // Open namespace for read
+    preferences.begin(PREF_NAMESPACE, true);
+
+    uint32_t val = preferences.getUInt(SETTINGS_BRIDGE_ID, 0);
+
+    preferences.end();
+
+    return val;
 }
 
 void setSSID(String SSID){

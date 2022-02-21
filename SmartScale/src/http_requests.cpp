@@ -5,6 +5,7 @@ DynamicJsonDocument returnDoc(1024);
 DynamicJsonDocument outgoingSettings(1024);
 DynamicJsonDocument outgoingWeights(1024);
 
+JsonObject settingsParent;
 JsonArray settingsUpdates;
 JsonArray itemCountUpdates;
 
@@ -13,7 +14,8 @@ HTTPClient http;
 // Task tryAuth(TASK_SECOND * 10, TASK_FOREVER, &tryConnect);
 
 void setupHTTP(Scheduler &userScheduler){
-    settingsUpdates = outgoingSettings.createNestedArray("scales");
+    settingsParent = outgoingSettings.createNestedObject();
+    settingsUpdates = settingsParent.createNestedArray("scales");
     itemCountUpdates = outgoingWeights.createNestedArray("itemCountUpdates");
 
     // Some example for adding objs to array
@@ -36,7 +38,7 @@ void setupHTTP(Scheduler &userScheduler){
     // Serial.println();
 
     xTaskCreatePinnedToCore(
-        tryConnect,            // Function that should be called
+        uploadSettings,     // Function that should be called
         "tryAuth",          // Name of the task (for debugging)
         3000,               // Stack size (bytes)
         NULL,               // Parameter to pass
@@ -46,11 +48,41 @@ void setupHTTP(Scheduler &userScheduler){
     );
 }
 
-void tryConnect(void* args){
+void addUpdatedSettings(JsonObject scaleSettings){
+    for(int i = 0; i < settingsUpdates.size(); i++){
+        if(settingsUpdates.getElement(i).containsKey("id") && scaleSettings.containsKey("id") && settingsUpdates.getElement(i)["id"] == scaleSettings["id"]){
+            // update the object
+            if(scaleSettings.containsKey("weightGramsPerXItmes")){
+                settingsUpdates.getElement(i)["weightGramsPerXItmes"] = scaleSettings["weightGramsPerXItmes"];
+            }
+
+            if(scaleSettings.containsKey("numItemsPerWeight")){
+                settingsUpdates.getElement(i)["numItemsPerWeight"] = scaleSettings["numItemsPerWeight"];
+            }
+
+            if(scaleSettings.containsKey("minNumItems")){
+                settingsUpdates.getElement(i)["minNumItems"] = scaleSettings["minNumItems"];
+            }
+
+            if(scaleSettings.containsKey("okNumItems")){
+                settingsUpdates.getElement(i)["okNumItems"] = scaleSettings["okNumItems"];
+            }
+
+            return;
+        }
+    }
+
+    settingsUpdates.add(scaleSettings); // stores by copy
+}
+
+void uploadSettings(void* args){
     for(;;){ // infinite loop
+        // Delay for 30s (like calling the task every 30s freeing up the core)
+        vTaskDelay(10000 / portTICK_PERIOD_MS);
+
         if(WiFi.status()== WL_CONNECTED){
             Serial.println("Start");
-            authorise();
+            updateSettings();
             Serial.println("End");
         }else{
             Serial.println("Not Connected");
@@ -58,30 +90,32 @@ void tryConnect(void* args){
 
         Serial.print("http() running on core ");
         Serial.println(xPortGetCoreID());
+        Serial.print("Heap free ");
+        Serial.println(ESP.getFreeHeap());
 
-        // Delay for 10s (like calling the task every 10s freeing up the core)
-        vTaskDelay(30000 / portTICK_PERIOD_MS);
     }
 }
 
 bool updateSettings(void){
+    serializeJsonPretty(settingsParent, Serial);
+    Serial.println();
     if(settingsUpdates.size() > 0){
         http.begin(SERVER_IP + "/core/settings/");
         http.addHeader("Authorization", "JWT " + deviceSettings.jwt);
         http.addHeader("Content-Type", "application/json");
 
         String output;
-        serializeJson(outgoingSettings, output);
+        serializeJson(settingsParent, output);
 
         int result = http.POST(output);
 
         if(result == HTTP_CODE_OK){
             // Success does return the full scale data. Not doing anything with it so
+            settingsUpdates.clear();
             return true;
         }else if(result == HTTP_CODE_UNAUTHORIZED){
             authorise();
         }
-
     }
 
     return false;
