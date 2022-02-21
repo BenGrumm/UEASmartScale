@@ -3,7 +3,9 @@
 HX711 scale;
 unsigned int userKnowWeight = 1000; // Known weight in grams
 
-void setupLC(unsigned int dataPin, unsigned int clkPin){
+Task checkAndUpdateScaleNum(TASK_SECOND * 30, TASK_FOREVER, &checkNumItemsAndUpdate);
+
+void setupLC(Scheduler &userScheduler, unsigned int dataPin, unsigned int clkPin){
     scale.begin(dataPin, clkPin);
 
     // Retrieve stored vals (if any)
@@ -18,6 +20,9 @@ void setupLC(unsigned int dataPin, unsigned int clkPin){
     // Configure with stored vals
     scale.set_scale(calVal);
     scale.set_offset(zeroFac); //Used for taring / zeroing
+
+    userScheduler.addTask(checkAndUpdateScaleNum);
+    checkAndUpdateScaleNum.enableDelayed(TASK_SECOND * 10);
 }
 
 void zeroTare(void){
@@ -48,4 +53,26 @@ void calibrateScale(void){
 
 void setKnownWeight(unsigned int knownVal){
     userKnowWeight = knownVal;
+}
+
+/**
+ * @brief Function to calculate the number of objects on scale from weight in grams and the reference weight and num items stored in memory
+ * 
+ * @return unsigned int number of items on the scale
+ */
+unsigned int getNumItems(void){
+    double ref = deviceSettings.referenceWeight;
+    unsigned int numItems = deviceSettings.numItemsPerWeight;
+    return (unsigned int) round(getWeightGrams() / (ref / numItems));
+}
+
+unsigned int lastKnownWeight = 2868;
+
+void checkNumItemsAndUpdate(void){
+    unsigned int currentNum = getNumItems();
+
+    if(lastKnownWeight == 2868 || lastKnownWeight != currentNum){
+        // addSettingsItemForMeshToSend(NUM_STORED_KEY, currentNum);
+        lastKnownWeight = currentNum;
+    }
 }

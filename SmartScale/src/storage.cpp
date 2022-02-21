@@ -205,6 +205,7 @@ void setNumItemsPerWeightVal(unsigned int numItems){
 
     deviceSettings.numItemsPerWeight = numItems;
     preferences.putUInt(SETTINGS_NUM_VALUES_PER, numItems);
+    addSettingsItemForMeshToSend(NUM_ITEMS_PER_WEIGHT_KEY, numItems);
 
     preferences.end();
 }
@@ -226,6 +227,7 @@ void setReferenceWeightOfItems(double itemsWeightGrams){
 
     deviceSettings.referenceWeight = itemsWeightGrams;
     preferences.putDouble(SETTINGS_WEIGHT_REFERENCE, itemsWeightGrams);
+    addSettingsItemForMeshToSend(WEIGHT_PER_X_KEY, itemsWeightGrams);
 
     preferences.end();
 }

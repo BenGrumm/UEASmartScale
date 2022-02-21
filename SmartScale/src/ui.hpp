@@ -70,6 +70,5 @@ void oneMenuWeightSetPress(void);
 void twoMenuWeightSetPress(void);
 void threeMenuWeightSetPress(void);
 void saveReferenceWeightToStorage(void);
-unsigned int getNumItems(void);
 
 #endif

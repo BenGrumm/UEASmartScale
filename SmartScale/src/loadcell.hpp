@@ -2,17 +2,26 @@
 #define LOADCELL_H
 
 #include <Arduino.h>
+#include <math.h>
 #include "HX711.h"
 #include "storage.hpp"
 #include "painlessMesh.h"
 
 /**
+ * @brief Function to calculate the number of objects on scale from weight in grams and the reference weight and num items stored in memory
+ * 
+ * @return unsigned int number of items on the scale
+ */
+unsigned int getNumItems(void);
+
+/**
  * @brief Function used for setup of the load cell
  * 
+ * @param userScheduler 
  * @param dataPin esp pin number for data
  * @param clkPin esp pin number for the clock
  */
-void setupLC(unsigned int dataPin, unsigned int clkPin);
+void setupLC(Scheduler &userScheduler, unsigned int dataPin, unsigned int clkPin);
 
 /**
  * @brief When called will zero the scale with the current weight on it

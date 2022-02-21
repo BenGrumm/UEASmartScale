@@ -747,13 +747,3 @@ void saveReferenceWeightToStorage(void){
     setReferenceWeightOfItems(getWeightGrams());
 }
 
-/**
- * @brief Function to calculate the number of objects on scale from weight in grams and the reference weight and num items stored in memory
- * 
- * @return unsigned int number of items on the scale
- */
-unsigned int getNumItems(void){
-    double ref = deviceSettings.referenceWeight;
-    unsigned int numItems = deviceSettings.numItemsPerWeight;
-    return (unsigned int) round(getWeightGrams() / (ref / numItems));
-}
