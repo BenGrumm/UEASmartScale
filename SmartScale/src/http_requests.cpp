@@ -192,6 +192,7 @@ bool authorise(void){
                 deserializeJson(returnDoc, http.getString());
                 JsonObject obj = returnDoc.as<JsonObject>();
                 String token = obj["token"];
+                Serial.print("Got JWT From Auth - ");
                 Serial.println(token);
                 setJWT(token);
                 return true;

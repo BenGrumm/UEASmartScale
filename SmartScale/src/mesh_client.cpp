@@ -92,7 +92,8 @@ void receivedCallback(const uint32_t &from, const String &msg){
 
 void sendUpdatedSettings(void){
     if(updatedSettingsObject.size() > 0 && checkIfBridgeExists()){
-        Serial.println("In Mesh Settings Update");
+        Serial.println("Is Settings To Update And Bridge Exists");
+        serializeJsonPretty(updatedSettingsObject, Serial); Serial.println();
         updatedSettingsObject["id"] = mesh.getNodeId();
         
         if(deviceSettings.bridgeID != mesh.getNodeId()){
@@ -100,7 +101,7 @@ void sendUpdatedSettings(void){
             serializeJson(updatedSettingsObject, msg);
             Serial.println(msg);
         
-            Serial.println("Send to bridge");
+            Serial.println("Not Bridge So Send to bridge");
             mesh.sendSingle(deviceSettings.bridgeID, msg);
         }else{
             Serial.println("Am Bridge");
@@ -108,11 +109,12 @@ void sendUpdatedSettings(void){
         }
         updatedSettingsObject.clear();
     }
-    serializeJsonPretty(updatedSettingsObject, Serial); Serial.println();
 }
 
 void sendNumStored(void){
     if(updatedItemCountObjects.size() > 0 && updatedItemCountObjects["numStored"] != lastNumItemsSent && checkIfBridgeExists()){
+        Serial.println("Is Num Stored To Update Thats Different And Bridge Exists");
+        serializeJsonPretty(updatedItemCountObjects, Serial); Serial.println();
         updatedItemCountObjects["id"] = mesh.getNodeId();
 
         if(deviceSettings.bridgeID != mesh.getNodeId()){
@@ -133,7 +135,7 @@ bool checkIfBridgeExists(void){
 
         while(itr != nl.end()) {
             if(*itr == deviceSettings.bridgeID){
-                Serial.print("Found Bridge ID - ");
+                Serial.print("Checked And Found Bridge ID In List - ");
                 Serial.println(*itr);
                 return true;
             }
