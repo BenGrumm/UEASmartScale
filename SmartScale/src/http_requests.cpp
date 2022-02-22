@@ -7,6 +7,7 @@ DynamicJsonDocument outgoingWeights(1024);
 
 JsonObject settingsParent;
 JsonArray settingsUpdates;
+JsonObject itemCountParent;
 JsonArray itemCountUpdates;
 
 HTTPClient http;
@@ -16,7 +17,8 @@ HTTPClient http;
 void setupHTTP(Scheduler &userScheduler){
     settingsParent = outgoingSettings.createNestedObject();
     settingsUpdates = settingsParent.createNestedArray("scales");
-    itemCountUpdates = outgoingWeights.createNestedArray("itemCountUpdates");
+    itemCountParent = outgoingWeights.createNestedObject();
+    itemCountUpdates = itemCountParent.createNestedArray("scales");
 
     // Some example for adding objs to array
     
@@ -75,6 +77,21 @@ void addUpdatedSettings(JsonObject scaleSettings){
     settingsUpdates.add(scaleSettings); // stores by copy
 }
 
+void addUpdatedNumItems(JsonObject scaleNumItems){
+    for(int i = 0; i < itemCountUpdates.size(); i++){
+        if(itemCountUpdates.getElement(i).containsKey("id") && scaleNumItems.containsKey("id") && itemCountUpdates.getElement(i)["id"] == scaleNumItems["id"]){
+            // update the object
+            if(scaleNumItems.containsKey(NUM_STORED_KEY)){
+                itemCountUpdates.getElement(i)[NUM_STORED_KEY] = scaleNumItems[NUM_STORED_KEY];
+            }
+
+            return;
+        }
+    }
+
+    itemCountUpdates.add(scaleNumItems); // stores by copy
+}
+
 void uploadSettings(void* args){
     for(;;){ // infinite loop
         // Delay for 30s (like calling the task every 30s freeing up the core)
@@ -83,6 +100,7 @@ void uploadSettings(void* args){
         if(WiFi.status()== WL_CONNECTED){
             Serial.println("Start");
             updateSettings();
+            updateNumItems();
             Serial.println("End");
         }else{
             Serial.println("Not Connected");
@@ -96,10 +114,37 @@ void uploadSettings(void* args){
     }
 }
 
+bool updateNumItems(void){
+    serializeJsonPretty(itemCountParent, Serial);
+    Serial.println();
+    if(itemCountUpdates.size() > 0 && deviceSettings.jwt != ""){
+        http.begin(SERVER_IP + "/core/scale/");
+        http.addHeader("Authorization", "JWT " + deviceSettings.jwt);
+        http.addHeader("Content-Type", "application/json");
+
+        String output;
+        serializeJson(itemCountParent, output);
+
+        int result = http.POST(output);
+
+        if(result == HTTP_CODE_OK){
+            // Success does return the full scale data. Not doing anything with it so
+            itemCountUpdates.clear();
+            return true;
+        }else if(result == HTTP_CODE_UNAUTHORIZED){
+            authorise();
+        }
+    }else if(deviceSettings.jwt == ""){
+        authorise();
+    }
+
+    return false;
+}
+
 bool updateSettings(void){
     serializeJsonPretty(settingsParent, Serial);
     Serial.println();
-    if(settingsUpdates.size() > 0){
+    if(settingsUpdates.size() > 0 && deviceSettings.jwt != ""){
         http.begin(SERVER_IP + "/core/settings/");
         http.addHeader("Authorization", "JWT " + deviceSettings.jwt);
         http.addHeader("Content-Type", "application/json");
@@ -116,6 +161,8 @@ bool updateSettings(void){
         }else if(result == HTTP_CODE_UNAUTHORIZED){
             authorise();
         }
+    }else if(deviceSettings.jwt == ""){
+        authorise();
     }
 
     return false;
@@ -151,22 +198,4 @@ bool authorise(void){
     }
 
     return false;
-}
-
-void makeRequest(){
-  HTTPClient http;
-  
-  http.begin("https://api.coindesk.com/v1/bpi/currentprice.json");
-
-  int httpCode = http.GET();
-
-  if(httpCode > 0) {
-    if(httpCode == HTTP_CODE_OK) {
-      String payload = http.getString();
-      deserializeJson(returnDoc, payload);
-      btcPriceGBP = returnDoc["bpi"]["GBP"]["rate_float"];
-      Serial.printf("BTC Price = $%f\n", btcPriceGBP);
-    }
-  }
-  http.end();
 }

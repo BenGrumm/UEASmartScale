@@ -12,6 +12,8 @@ void setupHTTP(Scheduler &userScheduler);
 bool authorise(void);
 void uploadSettings(void* args);
 void addUpdatedSettings(JsonObject scaleSettings);
+void addUpdatedNumItems(JsonObject scaleNumItems);
+bool updateNumItems(void);
 bool updateSettings(void);
 
 #endif

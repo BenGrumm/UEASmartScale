@@ -71,8 +71,8 @@ unsigned int lastKnownWeight = 2868;
 void checkNumItemsAndUpdate(void){
     unsigned int currentNum = getNumItems();
 
-    if(lastKnownWeight == 2868 || lastKnownWeight != currentNum){
-        // addSettingsItemForMeshToSend(NUM_STORED_KEY, currentNum);
+    if(lastKnownWeight != currentNum){
+        updateNumStored(currentNum);
         lastKnownWeight = currentNum;
     }
 }

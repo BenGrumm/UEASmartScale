@@ -59,8 +59,11 @@ IPAddress getMeshAPIP(void);
  */
 void loopMesh(void);
 
+void sendNumStored(void);
 void sendUpdatedSettings(void);
 void askForBridge(void);
+
+void updateNumStored(unsigned int numItems);
 
 void addSettingsItemForMeshToSend(String key, String value);
 void addSettingsItemForMeshToSend(String key, int value);

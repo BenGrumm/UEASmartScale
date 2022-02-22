@@ -10,6 +10,7 @@ JsonObject updatedSettingsObject;
 JsonObject updatedItemCountObjects;
 
 Task periodicSettingsUpdates(TASK_SECOND * 30, TASK_FOREVER, &sendUpdatedSettings);
+Task periodicNumItemsUpdates(TASK_SECOND * 30, TASK_FOREVER, &sendNumStored);
 
 unsigned int lastNumItemsSent = 941; // Random initializer as value likely to be 0 at setup
 
@@ -41,6 +42,9 @@ void setupMesh(Scheduler &userScheduler){
 
     userScheduler.addTask(periodicSettingsUpdates);
     periodicSettingsUpdates.enableDelayed(TASK_SECOND * 30);
+
+    userScheduler.addTask(periodicNumItemsUpdates);
+    periodicNumItemsUpdates.enableDelayed(TASK_SECOND * 15);
 }
 
 IPAddress getMeshAPIP(void){
@@ -71,7 +75,12 @@ void receivedCallback(const uint32_t &from, const String &msg){
         // Bridge has recieved a nodes updated settings add to list
         JsonObject obj = root[UPDATE_SETTINGS];
         addUpdatedSettings(obj);
+    }else if(root.containsKey(UPDATE_NUM_ITEMS)){
+        // Bridge recieved an updated item count for a node
+        JsonObject obj = root[UPDATE_NUM_ITEMS];
+        addUpdatedNumItems(obj);
     }else if(root.containsKey(BRIDGE_KNOWN)){
+        // Recieved the id of bridge on the current network
         if(deviceSettings.bridgeID != root[BRIDGE_KNOWN]){
             setBridgeID(root[BRIDGE_KNOWN]);
         }
@@ -104,10 +113,15 @@ void sendUpdatedSettings(void){
 
 void sendNumStored(void){
     if(updatedItemCountObjects.size() > 0 && updatedItemCountObjects["numStored"] != lastNumItemsSent && checkIfBridgeExists()){
-        String msg;
         updatedItemCountObjects["id"] = mesh.getNodeId();
-        serializeJson(updatedItemCountObjects, msg);
-        mesh.sendSingle(deviceSettings.bridgeID, msg);
+
+        if(deviceSettings.bridgeID != mesh.getNodeId()){
+            String msg;
+            serializeJson(updatedItemCountObjects, msg);
+            mesh.sendSingle(deviceSettings.bridgeID, msg);
+        }else{
+            addUpdatedNumItems(updatedItemCountObjects);
+        }
         updatedItemCountObjects.clear();
     }
 }
