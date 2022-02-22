@@ -98,26 +98,27 @@ void uploadSettings(void* args){
         vTaskDelay(10000 / portTICK_PERIOD_MS);
 
         if(WiFi.status()== WL_CONNECTED){
-            Serial.println("Start");
+            Serial.println("Connected - Updating");
             updateSettings();
             updateNumItems();
-            Serial.println("End");
         }else{
             Serial.println("Not Connected");
         }
 
-        Serial.print("http() running on core ");
-        Serial.println(xPortGetCoreID());
-        Serial.print("Heap free ");
-        Serial.println(ESP.getFreeHeap());
+        Serial.print("WIFI comms running on core ");
+        Serial.print(xPortGetCoreID());
+        Serial.print(", Heap free = ");
+        Serial.print(ESP.getFreeHeap());
+        Serial.println(" bytes");
 
     }
 }
 
 bool updateNumItems(void){
-    serializeJsonPretty(itemCountParent, Serial);
-    Serial.println();
     if(itemCountUpdates.size() > 0 && deviceSettings.jwt != ""){
+        serializeJsonPretty(itemCountParent, Serial);
+        Serial.println();
+
         http.begin(SERVER_IP + "/core/scale/");
         http.addHeader("Authorization", "JWT " + deviceSettings.jwt);
         http.addHeader("Content-Type", "application/json");
@@ -142,9 +143,10 @@ bool updateNumItems(void){
 }
 
 bool updateSettings(void){
-    serializeJsonPretty(settingsParent, Serial);
-    Serial.println();
     if(settingsUpdates.size() > 0 && deviceSettings.jwt != ""){
+        serializeJsonPretty(settingsParent, Serial);
+        Serial.println();
+
         http.begin(SERVER_IP + "/core/settings/");
         http.addHeader("Authorization", "JWT " + deviceSettings.jwt);
         http.addHeader("Content-Type", "application/json");

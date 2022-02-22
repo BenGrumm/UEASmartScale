@@ -70,7 +70,6 @@ int knownWeight = 15; // Used for calibrating the cell (10x to prevent floating 
  * @brief Main draw screen function called by task scheduler periodically
  */
 void drawScreen(void){
-    Serial.println("Draw");
     if(isFirstDraw){
         lcd.clear();
     }
