@@ -34,6 +34,7 @@ void setup(){
   // LCD uses defualt i2c pins
   setupUI(userScheduler, BUTTON_1, BUTTON_2, BUTTON_3);
   #ifdef ROOT
+  Serial.println("ROOT Def");
   setupServer(getMeshAPIP());
   setupHTTP(userScheduler);
   #endif
