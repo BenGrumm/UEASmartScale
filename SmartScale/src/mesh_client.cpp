@@ -4,13 +4,12 @@ painlessMesh  mesh;
 IPAddress myIP(0,0,0,0);
 
 DynamicJsonDocument updatedSettings(2048);
-DynamicJsonDocument upadtedItemCount(1024);
+bool hasUpdatedSinceLastSend = false;
 
 JsonObject updatedSettingsObject;
 JsonObject updatedItemCountObjects;
 
 Task periodicSettingsUpdates(TASK_SECOND * 30, TASK_FOREVER, &sendUpdatedSettings);
-Task periodicNumItemsUpdates(TASK_SECOND * 30, TASK_FOREVER, &sendNumStored);
 
 unsigned int lastNumItemsSent = 941; // Random initializer as value likely to be 0 at setup
 
@@ -23,6 +22,8 @@ void setupMesh(Scheduler &userScheduler){
     // mesh.init(MESH_PREFIX, MESH_PASSWORD, MESH_PORT, WIFI_AP_STA, 6);
     mesh.onReceive(&receivedCallback);
 
+    #ifdef ROOT
+
     // To connect to wifi
     mesh.stationManual(STATION_SSID, STATION_PASSWORD);
     mesh.setHostname(HOSTNAME);
@@ -31,6 +32,8 @@ void setupMesh(Scheduler &userScheduler){
     // This node and all other nodes should ideally know the mesh contains a root, so call this on all nodes
     mesh.setContainsRoot(true);
 
+    #endif
+
     updatedSettingsObject = updatedSettings.createNestedObject(UPDATE_SETTINGS);
 
     if(deviceSettings.initialisation){
@@ -38,13 +41,9 @@ void setupMesh(Scheduler &userScheduler){
         addSettingsItemForMeshToSend(WEIGHT_PER_X_KEY, deviceSettings.referenceWeight);
     }
 
-    updatedItemCountObjects = upadtedItemCount.createNestedObject(UPDATE_NUM_ITEMS);
-
     userScheduler.addTask(periodicSettingsUpdates);
-    periodicSettingsUpdates.enableDelayed(TASK_SECOND * 30);
+    periodicSettingsUpdates.enableDelayed(TASK_SECOND * 15);
 
-    userScheduler.addTask(periodicNumItemsUpdates);
-    periodicNumItemsUpdates.enableDelayed(TASK_SECOND * 15);
 }
 
 IPAddress getMeshAPIP(void){
@@ -72,13 +71,11 @@ void receivedCallback(const uint32_t &from, const String &msg){
         
         mesh.sendBroadcast(outputMsg, true);
     }else if(root.containsKey(UPDATE_SETTINGS) && mesh.isRoot()){
+        #ifdef ROOT
         // Bridge has recieved a nodes updated settings add to list
         JsonObject obj = root[UPDATE_SETTINGS];
         addUpdatedSettings(obj);
-    }else if(root.containsKey(UPDATE_NUM_ITEMS)){
-        // Bridge recieved an updated item count for a node
-        JsonObject obj = root[UPDATE_NUM_ITEMS];
-        addUpdatedNumItems(obj);
+        #endif
     }else if(root.containsKey(BRIDGE_KNOWN)){
         // Recieved the id of bridge on the current network
         if(deviceSettings.bridgeID != root[BRIDGE_KNOWN]){
@@ -87,6 +84,16 @@ void receivedCallback(const uint32_t &from, const String &msg){
     }else if(root.containsKey(RECIEVED_UPDATED_SETTINGS)){
         // TODO Read update settings locally
         // Return ack
+    }else if(root.containsKey(SERVER_RECIEVED_SETTINGS)){
+        clearSettings();
+    }
+}
+
+void clearSettings(void){
+    Serial.println("Clearing settings");
+    if(!hasUpdatedSinceLastSend){
+        Serial.println("Have Cleared");
+        updatedSettingsObject.clear();
     }
 }
 
@@ -103,28 +110,23 @@ void sendUpdatedSettings(void){
         
             Serial.println("Not Bridge So Send to bridge");
             mesh.sendSingle(deviceSettings.bridgeID, msg);
-        }else{
+        }
+        #ifdef ROOT
+        else{
             Serial.println("Am Bridge");
             addUpdatedSettings(updatedSettingsObject);
         }
-        updatedSettingsObject.clear();
+        #endif
+
+        hasUpdatedSinceLastSend = false;
     }
 }
 
-void sendNumStored(void){
-    if(updatedItemCountObjects.size() > 0 && updatedItemCountObjects["numStored"] != lastNumItemsSent && checkIfBridgeExists()){
-        Serial.println("Is Num Stored To Update Thats Different And Bridge Exists");
-        serializeJsonPretty(updatedItemCountObjects, Serial); Serial.println();
-        updatedItemCountObjects["id"] = mesh.getNodeId();
-
-        if(deviceSettings.bridgeID != mesh.getNodeId()){
-            String msg;
-            serializeJson(updatedItemCountObjects, msg);
-            mesh.sendSingle(deviceSettings.bridgeID, msg);
-        }else{
-            addUpdatedNumItems(updatedItemCountObjects);
-        }
-        updatedItemCountObjects.clear();
+void rootSendUpdateAck(uint32_t id){
+    if(id == mesh.getNodeId()){
+        clearSettings();
+    }else{
+        mesh.sendSingle(id, "{\"SERVER_RECIEVED_SETTINGS\":true}");
     }
 }
 
@@ -149,23 +151,28 @@ bool checkIfBridgeExists(void){
 }
 
 void updateNumStored(unsigned int numItems){
-    updatedItemCountObjects["numStored"] = numItems;
+    updatedSettingsObject[NUM_STORED_KEY] = numItems;
+    hasUpdatedSinceLastSend = true;
 }
 
 void addSettingsItemForMeshToSend(String key, String value){
     updatedSettingsObject[key] = value;
+    hasUpdatedSinceLastSend = true;
 }
 
 void addSettingsItemForMeshToSend(String key, int value){
     updatedSettingsObject[key] = value;
+    hasUpdatedSinceLastSend = true;
 }
 
 void addSettingsItemForMeshToSend(String key, double value){
     updatedSettingsObject[key] = value;
+    hasUpdatedSinceLastSend = true;
 }
 
 void addSettingsItemForMeshToSend(String key, unsigned int value){
     updatedSettingsObject[key] = value;
+    hasUpdatedSinceLastSend = true;
 }
 
 

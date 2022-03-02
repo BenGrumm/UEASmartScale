@@ -6,14 +6,14 @@
 #include <WiFi.h>
 #include "painlessMesh.h"
 #include "storage.hpp"
+#include "mesh_client.hpp"
 
+const String SERVER_IP = "http://192.168.1.101:8000";
 
 void setupHTTP(Scheduler &userScheduler);
 bool authorise(void);
 void uploadSettings(void* args);
 void addUpdatedSettings(JsonObject scaleSettings);
-void addUpdatedNumItems(JsonObject scaleNumItems);
-bool updateNumItems(void);
 bool updateSettings(void);
 
 #endif

@@ -209,6 +209,9 @@ void drawMenu(void){
                 isFirstDraw = false;
             }
             break;
+        
+        #ifdef ROOT
+
         case(MENU_SETTINGS_SERVER):
             if(isFirstDraw){
                 lcd.setCursor(0, 0);
@@ -218,6 +221,7 @@ void drawMenu(void){
                 isFirstDraw = false;
             }
             break;
+
         case(MENU_SETTINGS_SERVER_CONFIRM):
             if(isFirstDraw){
                 httpServerOn();
@@ -229,6 +233,8 @@ void drawMenu(void){
                 isFirstDraw = false;
             }
             break;
+        
+        #endif
     }
 }
 
@@ -406,7 +412,11 @@ void IRAM_ATTR threeMenuPressed(void){
             threeCalibrationPress();
             break;
         case(MENU_DISPLAY_UNITS):
+            #ifdef ROOT
             menuState = MENU_SETTINGS_SERVER;
+            #else
+            menuState = MENU_EXIT;
+            #endif
             drawUI.forceNextIteration();
             break;
         case(MENU_SETTINGS_SERVER):
@@ -530,6 +540,9 @@ void IRAM_ATTR twoMenuPressed(void){
             displayGrams = !displayGrams;
             drawUI.forceNextIteration();
             break;
+        
+        #ifdef ROOT
+
         case(MENU_SETTINGS_SERVER):
             menuState = MENU_SETTINGS_SERVER_CONFIRM;
             drawUI.forceNextIteration();
@@ -539,6 +552,8 @@ void IRAM_ATTR twoMenuPressed(void){
             menuState = MENU_SETTINGS_SERVER;
             drawUI.forceNextIteration();
             break;
+    
+        #endif
     }
 }
 
@@ -637,7 +652,11 @@ void IRAM_ATTR onePressed(void){
 void IRAM_ATTR oneMenuPressed(void){
     switch(menuState){
         case(MENU_EXIT):
+            #ifdef ROOT
             menuState = MENU_SETTINGS_SERVER;
+            #else
+            menuState = MENU_DISPLAY_UNITS;
+            #endif
             drawUI.forceNextIteration();
             break;
         case(MENU_SET_MIN):

@@ -8,7 +8,12 @@
 #include <math.h>
 
 #include "loadcell.hpp"
+
+#ifdef ROOT
+
 #include "settings_server.hpp"
+
+#endif
 
 #define MAX_LOAD_CELL_MASS 50 // The max rated weight for load cell * 10 so fp operations not done in irq functions
 

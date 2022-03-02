@@ -15,7 +15,10 @@
 #include <HTTPClient.h>
 #include <ArduinoJson.h>
 #include "storage.hpp"
+
+#ifdef ROOT
 #include "http_requests.hpp"
+#endif
 
 #define   MESH_PREFIX     "whateverYouLike"
 #define   MESH_PASSWORD   "somethingSneaky"
@@ -31,7 +34,7 @@
 #define BRIDGE_KNOWN "BRIDGE_DECLERATION"                       // When the bridge is telling its id
 #define UPDATE_SETTINGS "UPDATE_SETTINGS"                       // When a node is updating it's settings
 #define RECIEVED_UPDATED_SETTINGS "RECIEVED_UPDATED_SETTINGS"   // When a node is recieving settings updates
-#define UPDATE_NUM_ITEMS "UPDATE_ITEMS"                         // When a node is updating the number of items
+#define SERVER_RECIEVED_SETTINGS "SERVER_RECIEVED_SETTINGS"     // When the server acks your updated settings
 
 #define NUM_STORED_KEY "numStored"
 #define WEIGHT_PER_X_KEY "weightGramsPerXItmes"
@@ -59,7 +62,6 @@ IPAddress getMeshAPIP(void);
  */
 void loopMesh(void);
 
-void sendNumStored(void);
 void sendUpdatedSettings(void);
 void askForBridge(void);
 
@@ -69,6 +71,9 @@ void addSettingsItemForMeshToSend(String key, String value);
 void addSettingsItemForMeshToSend(String key, int value);
 void addSettingsItemForMeshToSend(String key, double value);
 void addSettingsItemForMeshToSend(String key, unsigned int value);
+
+void rootSendUpdateAck(uint32_t id);
+void clearSettings(void);
 
 /**
  * @brief Function that will iterate through nodes in the mesh and check if current node 

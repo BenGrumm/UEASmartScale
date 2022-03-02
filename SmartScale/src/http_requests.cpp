@@ -2,13 +2,10 @@
 
 double btcPriceGBP = 0;
 DynamicJsonDocument returnDoc(1024);
-DynamicJsonDocument outgoingSettings(1024);
-DynamicJsonDocument outgoingWeights(1024);
+DynamicJsonDocument outgoingSettings(2048);
 
 JsonObject settingsParent;
 JsonArray settingsUpdates;
-JsonObject itemCountParent;
-JsonArray itemCountUpdates;
 
 HTTPClient http;
 
@@ -17,9 +14,7 @@ HTTPClient http;
 void setupHTTP(Scheduler &userScheduler){
     settingsParent = outgoingSettings.createNestedObject();
     settingsUpdates = settingsParent.createNestedArray("scales");
-    itemCountParent = outgoingWeights.createNestedObject();
-    itemCountUpdates = itemCountParent.createNestedArray("scales");
-
+    
     // Some example for adding objs to array
     
     // JsonObject newObj = settingsUpdates.createNestedObject();
@@ -54,20 +49,24 @@ void addUpdatedSettings(JsonObject scaleSettings){
     for(int i = 0; i < settingsUpdates.size(); i++){
         if(settingsUpdates.getElement(i).containsKey("id") && scaleSettings.containsKey("id") && settingsUpdates.getElement(i)["id"] == scaleSettings["id"]){
             // update the object
-            if(scaleSettings.containsKey("weightGramsPerXItmes")){
-                settingsUpdates.getElement(i)["weightGramsPerXItmes"] = scaleSettings["weightGramsPerXItmes"];
+            if(scaleSettings.containsKey(NUM_STORED_KEY)){
+                settingsUpdates.getElement(i)[NUM_STORED_KEY] = scaleSettings[NUM_STORED_KEY];
             }
 
-            if(scaleSettings.containsKey("numItemsPerWeight")){
-                settingsUpdates.getElement(i)["numItemsPerWeight"] = scaleSettings["numItemsPerWeight"];
+            if(scaleSettings.containsKey(WEIGHT_PER_X_KEY)){
+                settingsUpdates.getElement(i)[WEIGHT_PER_X_KEY] = scaleSettings[WEIGHT_PER_X_KEY];
             }
 
-            if(scaleSettings.containsKey("minNumItems")){
-                settingsUpdates.getElement(i)["minNumItems"] = scaleSettings["minNumItems"];
+            if(scaleSettings.containsKey(NUM_ITEMS_PER_WEIGHT_KEY)){
+                settingsUpdates.getElement(i)[NUM_ITEMS_PER_WEIGHT_KEY] = scaleSettings[NUM_ITEMS_PER_WEIGHT_KEY];
             }
 
-            if(scaleSettings.containsKey("okNumItems")){
-                settingsUpdates.getElement(i)["okNumItems"] = scaleSettings["okNumItems"];
+            if(scaleSettings.containsKey(MIN_NUM_ITEMS_KEY)){
+                settingsUpdates.getElement(i)[MIN_NUM_ITEMS_KEY] = scaleSettings[MIN_NUM_ITEMS_KEY];
+            }
+
+            if(scaleSettings.containsKey(OK_NUM_ITEMS_KEY)){
+                settingsUpdates.getElement(i)[OK_NUM_ITEMS_KEY] = scaleSettings[OK_NUM_ITEMS_KEY];
             }
 
             return;
@@ -75,21 +74,6 @@ void addUpdatedSettings(JsonObject scaleSettings){
     }
 
     settingsUpdates.add(scaleSettings); // stores by copy
-}
-
-void addUpdatedNumItems(JsonObject scaleNumItems){
-    for(int i = 0; i < itemCountUpdates.size(); i++){
-        if(itemCountUpdates.getElement(i).containsKey("id") && scaleNumItems.containsKey("id") && itemCountUpdates.getElement(i)["id"] == scaleNumItems["id"]){
-            // update the object
-            if(scaleNumItems.containsKey(NUM_STORED_KEY)){
-                itemCountUpdates.getElement(i)[NUM_STORED_KEY] = scaleNumItems[NUM_STORED_KEY];
-            }
-
-            return;
-        }
-    }
-
-    itemCountUpdates.add(scaleNumItems); // stores by copy
 }
 
 void uploadSettings(void* args){
@@ -100,7 +84,6 @@ void uploadSettings(void* args){
         if(WiFi.status()== WL_CONNECTED){
             Serial.println("Connected - Updating");
             updateSettings();
-            updateNumItems();
         }else{
             Serial.println("Not Connected");
         }
@@ -112,34 +95,6 @@ void uploadSettings(void* args){
         Serial.println(" bytes");
 
     }
-}
-
-bool updateNumItems(void){
-    if(itemCountUpdates.size() > 0 && deviceSettings.jwt != ""){
-        serializeJsonPretty(itemCountParent, Serial);
-        Serial.println();
-
-        http.begin(SERVER_IP + "/core/scale/");
-        http.addHeader("Authorization", "JWT " + deviceSettings.jwt);
-        http.addHeader("Content-Type", "application/json");
-
-        String output;
-        serializeJson(itemCountParent, output);
-
-        int result = http.POST(output);
-
-        if(result == HTTP_CODE_OK){
-            // Success does return the full scale data. Not doing anything with it so
-            itemCountUpdates.clear();
-            return true;
-        }else if(result == HTTP_CODE_UNAUTHORIZED){
-            authorise();
-        }
-    }else if(deviceSettings.jwt == ""){
-        authorise();
-    }
-
-    return false;
 }
 
 bool updateSettings(void){
@@ -159,6 +114,18 @@ bool updateSettings(void){
         if(result == HTTP_CODE_OK){
             // Success does return the full scale data. Not doing anything with it so
             settingsUpdates.clear();
+            deserializeJson(returnDoc, http.getString());
+            JsonObject obj = returnDoc.as<JsonObject>();
+
+            JsonArray updatedIds = obj["updated"];
+
+            Serial.println("ID's Returned");
+            for(uint32_t id : updatedIds){
+                Serial.println(id);
+                // TODO ack update to every node returned in list
+                rootSendUpdateAck(id);
+            }
+
             return true;
         }else if(result == HTTP_CODE_UNAUTHORIZED){
             authorise();
