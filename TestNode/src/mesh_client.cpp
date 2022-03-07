@@ -3,15 +3,7 @@
 painlessMesh  mesh;
 IPAddress myIP(0,0,0,0);
 
-DynamicJsonDocument updatedSettings(2048);
-bool hasUpdatedSinceLastSend = false;
-
-JsonObject updatedSettingsObject;
-JsonObject updatedItemCountObjects;
-
 uint32_t bridgeID = 0;
-
-Task periodicSettingsUpdates(TASK_SECOND * 10, TASK_FOREVER, &sendUpdatedSettings);
 
 unsigned int lastNumItemsSent = 941; // Random initializer as value likely to be 0 at setup
 
@@ -23,16 +15,17 @@ void setupMesh(Scheduler &userScheduler){
     mesh.init(MESH_PREFIX, MESH_PASSWORD, &userScheduler, MESH_PORT, WIFI_AP_STA, 6);
     // mesh.init(MESH_PREFIX, MESH_PASSWORD, MESH_PORT, WIFI_AP_STA, 6);
     mesh.onReceive(&receivedCallback);
-
-    updatedSettingsObject = updatedSettings.createNestedObject(UPDATE_SETTINGS);
-
-    userScheduler.addTask(periodicSettingsUpdates);
-    periodicSettingsUpdates.enableDelayed(TASK_SECOND * 15);
+    mesh.onNewConnection(&newConnectionCallback);
 
 }
 
 IPAddress getMeshAPIP(void){
     return IPAddress(mesh.getAPIP());
+}
+
+void newConnectionCallback(uint32_t nodeId) {
+    Serial.printf("--> startHere: New Connection, nodeId = %u\n", nodeId);
+    askForBridge();
 }
 
 /**
@@ -47,15 +40,7 @@ void receivedCallback(const uint32_t &from, const String &msg){
     deserializeJson(jsonBuffer, msg);
     JsonObject root = jsonBuffer.as<JsonObject>();
 
-    if(root.containsKey(FIND_BRIDGE) && mesh.isRoot()){
-        String outputMsg;
-        StaticJsonDocument<1024> jsonBuffer;
-        JsonObject obj = jsonBuffer.createNestedObject();
-        obj[BRIDGE_KNOWN] = mesh.getNodeId();
-        serializeJson(obj, outputMsg);
-        
-        mesh.sendBroadcast(outputMsg, true);
-    }else if(root.containsKey(BRIDGE_KNOWN)){
+    if(root.containsKey(BRIDGE_KNOWN)){
         // Recieved the id of bridge on the current network
         if(bridgeID != root[BRIDGE_KNOWN]){
             bridgeID = root[BRIDGE_KNOWN];
@@ -70,38 +55,29 @@ void receivedCallback(const uint32_t &from, const String &msg){
 
 void clearSettings(void){
     Serial.println("Clearing settings");
-    if(!hasUpdatedSinceLastSend){
-        Serial.println("Have Cleared");
-        updatedSettingsObject.clear();
-    }
+    // if(!hasUpdatedSinceLastSend){
+    //     Serial.println("Have Cleared");
+    //     updatedSettingsObject.clear();
+    // }
 }
 
-void sendUpdatedSettings(void){
+void sendUpdatedSettings(String msg){
     Serial.println("Updating");
-    if(updatedSettingsObject.size() > 0 && checkIfBridgeExists()){
+
+    if(checkIfBridgeExists()){
+
         Serial.println("Is Settings To Update And Bridge Exists");
-        serializeJsonPretty(updatedSettingsObject, Serial); Serial.println();
-        updatedSettingsObject["id"] = mesh.getNodeId();
         
         if(bridgeID != mesh.getNodeId()){
-            String msg;
-            serializeJson(updatedSettings, msg);
-            Serial.println(msg);
-        
-            Serial.println("Not Bridge So Send to bridge");
-            mesh.sendSingle(bridgeID, msg);
+            String finishedMSG = "{\"UPDATE_SETTINGS\":" + msg + "}";
+            Serial.println(finishedMSG);        
+            mesh.sendSingle(bridgeID, finishedMSG);
         }
 
-        hasUpdatedSinceLastSend = false;
-    }
-}
-
-void rootSendUpdateAck(uint32_t id){
-    if(id == mesh.getNodeId()){
-        clearSettings();
     }else{
-        mesh.sendSingle(id, "{\"SERVER_RECIEVED_SETTINGS\":true}");
+        Serial.println("Bridge not exists");
     }
+
 }
 
 bool checkIfBridgeExists(void){
@@ -123,32 +99,6 @@ bool checkIfBridgeExists(void){
 
     return false;
 }
-
-void updateNumStored(unsigned int numItems){
-    updatedSettingsObject[NUM_STORED_KEY] = numItems;
-    hasUpdatedSinceLastSend = true;
-}
-
-void addSettingsItemForMeshToSend(String key, String value){
-    updatedSettingsObject[key] = value;
-    hasUpdatedSinceLastSend = true;
-}
-
-void addSettingsItemForMeshToSend(String key, int value){
-    updatedSettingsObject[key] = value;
-    hasUpdatedSinceLastSend = true;
-}
-
-void addSettingsItemForMeshToSend(String key, double value){
-    updatedSettingsObject[key] = value;
-    hasUpdatedSinceLastSend = true;
-}
-
-void addSettingsItemForMeshToSend(String key, unsigned int value){
-    updatedSettingsObject[key] = value;
-    hasUpdatedSinceLastSend = true;
-}
-
 
 void askForBridge(void){
     // TODO replace this with proper enum

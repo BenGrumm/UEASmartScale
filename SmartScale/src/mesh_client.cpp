@@ -73,6 +73,7 @@ void receivedCallback(const uint32_t &from, const String &msg){
         mesh.sendBroadcast(outputMsg, true);
     }else if(root.containsKey(UPDATE_SETTINGS) && mesh.isRoot()){
         #ifdef ROOT
+        Serial.println("Updating settings");
         // Bridge has recieved a nodes updated settings add to list
         JsonObject obj = root[UPDATE_SETTINGS];
         addUpdatedSettings(obj);

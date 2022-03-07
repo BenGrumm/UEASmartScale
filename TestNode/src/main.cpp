@@ -1,5 +1,6 @@
 #include <Arduino.h>
 #include "mesh_client.hpp"
+#include "node_simulator.hpp"
 
 Scheduler userScheduler;
 
@@ -9,7 +10,8 @@ void setup() {
 
   setupMesh(userScheduler);
 
-  updateNumStored(140);
+  setupSimulator(userScheduler);
+
 }
 
 void loop() {

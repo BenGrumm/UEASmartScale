@@ -3,6 +3,7 @@
 
 #include "IPAddress.h"
 #include "painlessMesh.h"
+#include "node_simulator.hpp"
 
 #include <AsyncTCP.h>
 #include <WiFi.h>
@@ -46,17 +47,10 @@ IPAddress getMeshAPIP(void);
  */
 void loopMesh(void);
 
-void sendUpdatedSettings(void);
+void sendUpdatedSettings(String msg);
 void askForBridge(void);
+void newConnectionCallback(uint32_t nodeId);
 
-void updateNumStored(unsigned int numItems);
-
-void addSettingsItemForMeshToSend(String key, String value);
-void addSettingsItemForMeshToSend(String key, int value);
-void addSettingsItemForMeshToSend(String key, double value);
-void addSettingsItemForMeshToSend(String key, unsigned int value);
-
-void rootSendUpdateAck(uint32_t id);
 void clearSettings(void);
 
 /**
