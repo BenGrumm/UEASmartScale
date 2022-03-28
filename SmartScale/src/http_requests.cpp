@@ -9,6 +9,8 @@ JsonArray settingsUpdates;
 
 HTTPClient http;
 
+bool hasAuthed = false;
+
 // Task tryAuth(TASK_SECOND * 10, TASK_FOREVER, &tryConnect);
 
 void setupHTTP(Scheduler &userScheduler){
@@ -162,10 +164,15 @@ bool authorise(void){
                 Serial.print("Got JWT From Auth - ");
                 Serial.println(token);
                 setJWT(token);
+                hasAuthed = true;
                 return true;
             }
         }
     }
 
     return false;
+}
+
+bool hadSuccessfulLogin(void){
+    return hasAuthed;
 }

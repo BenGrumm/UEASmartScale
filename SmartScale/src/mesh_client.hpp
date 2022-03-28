@@ -3,6 +3,7 @@
 
 #include "IPAddress.h"
 #include "painlessMesh.h"
+#include "storage.hpp"
 
 #ifdef ESP8266
 #include "Hash.h"
@@ -20,12 +21,7 @@
 #include "http_requests.hpp"
 #endif
 
-#define   MESH_PREFIX     "whateverYouLike"
-#define   MESH_PASSWORD   "somethingSneaky"
-#define   MESH_PORT       5555
-
-#define   STATION_SSID     "TP-LINK_947990"
-#define   STATION_PASSWORD "44020712"
+#define   MESH_PORT       6666
 
 #define HOSTNAME "HTTP_BRIDGE"
 
@@ -64,6 +60,7 @@ void loopMesh(void);
 
 void sendUpdatedSettings(void);
 void askForBridge(void);
+int getNumConnectedNodes(void);
 
 void updateNumStored(unsigned int numItems);
 
@@ -83,6 +80,8 @@ void clearSettings(void);
  * @return false if node knows about no bridge or bridge id not in current network
  */
 bool checkIfBridgeExists(void);
+
+bool getIfBridgeExists(void);
 
 void receivedCallback(const uint32_t &from, const String &msg);
 

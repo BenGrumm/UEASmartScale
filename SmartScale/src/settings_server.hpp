@@ -3,6 +3,7 @@
 
 #include "IPAddress.h"
 #include "painlessMesh.h"
+#include "storage.hpp"
 
 #ifdef ESP8266
 #include "Hash.h"

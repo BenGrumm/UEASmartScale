@@ -5,6 +5,7 @@ IPAddress myIP(0,0,0,0);
 
 DynamicJsonDocument updatedSettings(2048);
 bool hasUpdatedSinceLastSend = false;
+bool bridgeExists = false;
 
 JsonObject updatedSettingsObject;
 JsonObject updatedItemCountObjects;
@@ -18,14 +19,18 @@ void setupMesh(Scheduler &userScheduler){
 
     // Channel set to 6. Make sure to use the same channel for your mesh and for you other
     // network (STATION_SSID)
-    mesh.init(MESH_PREFIX, MESH_PASSWORD, &userScheduler, MESH_PORT, WIFI_AP_STA, 6);
-    // mesh.init(MESH_PREFIX, MESH_PASSWORD, MESH_PORT, WIFI_AP_STA, 6);
+    mesh.init("SCALE_NETWORK_" + deviceSettings.meshName, "MESH_PASS_" + deviceSettings.meshPassword, &userScheduler, MESH_PORT, WIFI_AP_STA, 6);
+    // mesh.init(MESH_PREFIX, MESH_PASSWORD, &userScheduler, MESH_PORT, WIFI_AP_STA, 6);
     mesh.onReceive(&receivedCallback);
 
     #ifdef ROOT
 
+    Serial.println("Setup Mesh WIFI");
+
     // To connect to wifi
-    mesh.stationManual(STATION_SSID, STATION_PASSWORD);
+    // mesh.stationManual(STATION_SSID, STATION_PASSWORD);
+    Serial.println("SSID " + deviceSettings.WIFISSID + ", Password = " + deviceSettings.WIFIPassword);
+    mesh.stationManual(deviceSettings.WIFISSID, deviceSettings.WIFIPassword);
     mesh.setHostname(HOSTNAME);
     // Bridge node, should (in most cases) be a root node. See [the wiki](https://gitlab.com/painlessMesh/painlessMesh/wikis/Possible-challenges-in-mesh-formation) for some background
     mesh.setRoot(true);
@@ -141,6 +146,7 @@ bool checkIfBridgeExists(void){
             if(*itr == deviceSettings.bridgeID){
                 Serial.print("Checked And Found Bridge ID In List - ");
                 Serial.println(*itr);
+                bridgeExists = true;
                 return true;
             }
             itr++;
@@ -149,7 +155,17 @@ bool checkIfBridgeExists(void){
 
     askForBridge();
 
+    bridgeExists = false;
+
     return false;
+}
+
+bool getIfBridgeExists(void){
+    return bridgeExists;
+}
+
+int getNumConnectedNodes(void){
+    return mesh.getNodeList(true).size();
 }
 
 void updateNumStored(unsigned int numItems){

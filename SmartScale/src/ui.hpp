@@ -6,6 +6,7 @@
 #include <LiquidCrystal_I2C.h>
 #include "painlessMesh.h"
 #include <math.h>
+#include "WiFi.h"
 
 #include "loadcell.hpp"
 
@@ -33,6 +34,10 @@
 #define MENU_SET_WEIGHT_CONFIRM 9
 #define MENU_SETTINGS_SERVER 10
 #define MENU_SETTINGS_SERVER_CONFIRM 11
+#define MENU_SETTINGS_CHECK_ROOT 12
+#define MENU_SETTINGS_CHECK_ROOT_CONFIRM 13
+#define MENU_SETTINGS_CHECK_NODE 14
+#define MENU_SETTINGS_CHECK_NODE_CONFIRM 15
 
 #define CALIBRATE_ZERO 1
 #define CALIBRATE_SET_WEIGHT_PROMPT 2

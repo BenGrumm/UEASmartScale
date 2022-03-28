@@ -16,6 +16,9 @@
 #define SETTINGS_SERVER_PASSWORD "SERVER_PASSWORD"
 #define SETTINGS_JWT "JWT"
 
+#define SETTINGS_MESH_NAME "MESH_NAME"
+#define SETTINGS_MESH_PASSWORD "MESH_PASSWORD"
+
 #define SETTINGS_NUM_WEIGHT "NUM_WEIGHT"
 #define SETTINGS_CAL_VALUE "CAL_VALUE"
 #define SETTINGS_ZERO_FACTOR "ZERO_FACTOR"
@@ -36,6 +39,9 @@ struct Settings{
 
     String WIFISSID;
     String WIFIPassword;
+
+    String meshName;
+    String meshPassword;
 
     uint32_t bridgeID;
     
@@ -75,6 +81,12 @@ String getPasswordMem(void);
 
 void setJWT(String jwt);
 String getJWTMem(void);
+
+// Mesh login functions
+void saveMeshName(String name);
+String getMeshName(void);
+void saveMeshPassword(String password);
+String getMeshPassword(void);
 
 
 

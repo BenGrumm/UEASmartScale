@@ -92,7 +92,7 @@ void sendUpdatedSettings(void){
         
         if(bridgeID != mesh.getNodeId()){
             String msg;
-            serializeJson(updatedSettingsObject, msg);
+            serializeJson(updatedSettings, msg);
             Serial.println(msg);
         
             Serial.println("Not Bridge So Send to bridge");

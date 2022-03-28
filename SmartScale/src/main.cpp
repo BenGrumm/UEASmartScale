@@ -3,6 +3,7 @@
 #include "loadcell.hpp"
 #include "settings_server.hpp"
 #include "mesh_client.hpp"
+#include "bt_scanner.hpp"
 
 #ifdef ROOT
 #include "http_requests.hpp"
@@ -38,6 +39,7 @@ void setup(){
   setupServer(getMeshAPIP());
   setupHTTP(userScheduler);
   #endif
+  // setupBTScan(userScheduler);
 
   Serial.print("setup() running on core ");
   Serial.println(xPortGetCoreID());

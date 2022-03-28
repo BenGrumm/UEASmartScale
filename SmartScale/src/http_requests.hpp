@@ -15,5 +15,6 @@ bool authorise(void);
 void uploadSettings(void* args);
 void addUpdatedSettings(JsonObject scaleSettings);
 bool updateSettings(void);
+bool hadSuccessfulLogin(void);
 
 #endif

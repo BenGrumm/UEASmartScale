@@ -19,6 +19,9 @@ void setupStorage(void){
     deviceSettings.WIFISSID = preferences.getString(SETTINGS_WIFI_SSID, "");
     deviceSettings.WIFIPassword = preferences.getString(SETTINGS_WIFI_PASSWORD, "");
 
+    deviceSettings.meshName = preferences.getString(SETTINGS_MESH_NAME, "SCALE");
+    deviceSettings.meshPassword = preferences.getString(SETTINGS_MESH_PASSWORD, "12345");
+
     deviceSettings.initialisation = preferences.getBool(INITIALISATION, true);
 
     preferences.end();
@@ -257,6 +260,46 @@ double getWeightMem(void){
     preferences.begin(PREF_NAMESPACE, true);
 
     double val = preferences.getDouble(SETTINGS_NUM_WEIGHT, 0);
+
+    preferences.end();
+
+    return val;
+}
+
+void saveMeshName(String name){
+    // Open namespace for read and write
+    preferences.begin(PREF_NAMESPACE, false);
+
+    preferences.putString(SETTINGS_MESH_NAME, name);
+
+    preferences.end();
+}
+
+String getMeshName(void){
+    // Open namespace for read only
+    preferences.begin(PREF_NAMESPACE, true);
+
+    String val = preferences.getString(SETTINGS_MESH_NAME, "SCALE");
+
+    preferences.end();
+
+    return val;
+}
+
+void saveMeshPassword(String password){
+    // Open namespace for read and write
+    preferences.begin(PREF_NAMESPACE, false);
+
+    preferences.putString(SETTINGS_MESH_PASSWORD, password);
+
+    preferences.end();
+}
+
+String getMeshPassword(void){
+    // Open namespace for read only
+    preferences.begin(PREF_NAMESPACE, true);
+
+    String val = preferences.getString(SETTINGS_MESH_PASSWORD, "12345");
 
     preferences.end();
 

@@ -15,6 +15,28 @@ volatile unsigned int numItemsSet = 1; // temp var for the num items in the MENU
 bool isFirstDraw = true;
 bool displayGrams = false;
 
+byte Check[] = {
+    B00000,
+    B00001,
+    B00011,
+    B10110,
+    B11100,
+    B01000,
+    B00000,
+    B00000
+};
+
+byte Cross[] = {
+    B00000,
+    B10001,
+    B11011,
+    B01110,
+    B01110,
+    B11011,
+    B10001,
+    B00000
+};
+
 Task drawUI(TASK_SECOND * 1, TASK_FOREVER, &drawScreen);
 Task zeroScale(TASK_IMMEDIATE, TASK_ONCE, &zeroTare);
 Task setKnownVal(TASK_IMMEDIATE, TASK_ONCE, &calibrateScale);
@@ -32,6 +54,9 @@ void setupUI(Scheduler &userScheduler, int button1Pin, int button2Pin, int butto
     lcd.init();                      // initialize the lcd 
     lcd.backlight();
 
+    lcd.createChar(0, Check);
+    lcd.createChar(1, Cross);
+
     // Use floating pin value as pseudo random seed (used in testing)
     // randomSeed(analogRead(0));
 
@@ -44,8 +69,10 @@ void setupUI(Scheduler &userScheduler, int button1Pin, int button2Pin, int butto
     attachInterrupt(digitalPinToInterrupt(button3Pin), buttonPress_three, FALLING);
 
     // Setup tasks
+    Serial.println("Add");
     userScheduler.addTask(drawUI);
     drawUI.enable();
+    Serial.println("Done");
 
     userScheduler.addTask(zeroScale); // enabled in interrupt
     userScheduler.addTask(setKnownVal);
@@ -70,6 +97,7 @@ int knownWeight = 15; // Used for calibrating the cell (10x to prevent floating 
  * @brief Main draw screen function called by task scheduler periodically
  */
 void drawScreen(void){
+    Serial.println("Draw");
     if(isFirstDraw){
         lcd.clear();
     }
@@ -233,8 +261,78 @@ void drawMenu(void){
                 isFirstDraw = false;
             }
             break;
-        
+
+        case(MENU_SETTINGS_CHECK_ROOT):
+            if(isFirstDraw){
+                lcd.setCursor(0, 0);
+                lcd.print("Check R Settings");
+                lcd.setCursor(0, 1);
+                lcd.print("<   continue   >");
+                isFirstDraw = false;
+            }
+            break;
+        case(MENU_SETTINGS_CHECK_ROOT_CONFIRM):
+            if(isFirstDraw){
+                lcd.setCursor(0, 0);
+                lcd.print(" WIFI ");
+                lcd.setCursor(8, 0);
+                lcd.print("Login ");
+                lcd.setCursor(0, 1);
+                lcd.print("      exit    ");
+                isFirstDraw = false;
+            }
+
+            if(WiFi.status()== WL_CONNECTED){
+                lcd.setCursor(6, 0);
+                lcd.write(byte(0));
+            }else{
+                lcd.setCursor(6, 0);
+                lcd.write(byte(1));
+            }
+
+            if(hadSuccessfulLogin()){
+                lcd.setCursor(14, 0);
+                lcd.write(byte(0));
+            }else{
+                lcd.setCursor(14, 0);
+                lcd.write(byte(1));
+            }
+
+            break;
         #endif
+
+        case(MENU_SETTINGS_CHECK_NODE):
+            if(isFirstDraw){
+                lcd.setCursor(0, 0);
+                lcd.print("Check N Settings");
+                lcd.setCursor(0, 1);
+                lcd.print("<   continue   >");
+                isFirstDraw = false;
+            }
+            break;
+        case(MENU_SETTINGS_CHECK_NODE_CONFIRM):
+            if(isFirstDraw){
+                lcd.setCursor(0, 0);
+                lcd.print("Root ");
+                lcd.setCursor(7, 0);
+                lcd.print("Num ");
+                lcd.setCursor(0, 1);
+                lcd.print("      exit    ");
+                isFirstDraw = false;
+            }
+
+            if(getIfBridgeExists()){
+                lcd.setCursor(5, 0);
+                lcd.write(byte(0));
+            }else{
+                lcd.setCursor(5, 0);
+                lcd.write(byte(1));
+            }
+
+            lcd.setCursor(11, 0);
+            lcd.print(getNumConnectedNodes());
+
+            break;
     }
 }
 
@@ -415,15 +513,23 @@ void IRAM_ATTR threeMenuPressed(void){
             #ifdef ROOT
             menuState = MENU_SETTINGS_SERVER;
             #else
-            menuState = MENU_EXIT;
+            menuState = MENU_SETTINGS_CHECK_NODE;
             #endif
             drawUI.forceNextIteration();
             break;
         case(MENU_SETTINGS_SERVER):
-            menuState = MENU_EXIT;
+            menuState = MENU_SETTINGS_CHECK_ROOT;
             drawUI.forceNextIteration();
             break;
         case(MENU_SETTINGS_SERVER_CONFIRM):
+            break;
+        case(MENU_SETTINGS_CHECK_ROOT):
+            menuState = MENU_SETTINGS_CHECK_NODE;
+            drawUI.forceNextIteration();
+            break;
+        case(MENU_SETTINGS_CHECK_NODE):
+            menuState = MENU_EXIT;
+            drawUI.forceNextIteration();
             break;
     }
 }
@@ -552,8 +658,23 @@ void IRAM_ATTR twoMenuPressed(void){
             menuState = MENU_SETTINGS_SERVER;
             drawUI.forceNextIteration();
             break;
-    
+        case(MENU_SETTINGS_CHECK_ROOT):
+            menuState = MENU_SETTINGS_CHECK_ROOT_CONFIRM;
+            drawUI.forceNextIteration();
+            break;
+        case(MENU_SETTINGS_CHECK_ROOT_CONFIRM):
+            menuState = MENU_SETTINGS_CHECK_ROOT;
+            drawUI.forceNextIteration();
+            break;
         #endif
+        case(MENU_SETTINGS_CHECK_NODE):
+            menuState = MENU_SETTINGS_CHECK_NODE_CONFIRM;
+            drawUI.forceNextIteration();
+            break;
+        case(MENU_SETTINGS_CHECK_NODE_CONFIRM):
+            menuState = MENU_SETTINGS_CHECK_NODE;
+            drawUI.forceNextIteration();
+            break;
     }
 }
 
@@ -652,11 +773,7 @@ void IRAM_ATTR onePressed(void){
 void IRAM_ATTR oneMenuPressed(void){
     switch(menuState){
         case(MENU_EXIT):
-            #ifdef ROOT
-            menuState = MENU_SETTINGS_SERVER;
-            #else
-            menuState = MENU_DISPLAY_UNITS;
-            #endif
+            menuState = MENU_SETTINGS_CHECK_NODE;
             drawUI.forceNextIteration();
             break;
         case(MENU_SET_MIN):
@@ -699,6 +816,18 @@ void IRAM_ATTR oneMenuPressed(void){
             drawUI.forceNextIteration();
             break;
         case(MENU_SETTINGS_SERVER_CONFIRM):
+            break;
+        case(MENU_SETTINGS_CHECK_ROOT):
+            menuState = MENU_SETTINGS_SERVER;
+            drawUI.forceNextIteration();
+            break;
+        case(MENU_SETTINGS_CHECK_NODE):
+            #ifdef ROOT
+            menuState = MENU_SETTINGS_CHECK_ROOT;
+            #else
+            menuState = MENU_DISPLAY_UNITS;
+            #endif
+            drawUI.forceNextIteration();
             break;
     }
 }
