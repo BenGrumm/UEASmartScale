@@ -67,6 +67,8 @@ void receivedCallback(const uint32_t &from, const String &msg){
     deserializeJson(jsonBuffer, msg);
     JsonObject root = jsonBuffer.as<JsonObject>();
 
+    // If is the root and receives a message asking to find bridge broadcast the
+    // id of this bridge
     if(root.containsKey(FIND_BRIDGE) && mesh.isRoot()){
         Serial.println("Send BRIDGE");
         String outputMsg;
@@ -76,22 +78,31 @@ void receivedCallback(const uint32_t &from, const String &msg){
         serializeJson(obj, outputMsg);
         
         mesh.sendBroadcast(outputMsg, true);
-    }else if(root.containsKey(UPDATE_SETTINGS) && mesh.isRoot()){
+    }
+    // If is root will store settings from all connected nodes and periodically upload them
+    // when it receives an object names UPDATE_SETTINGS will add to list that will update
+    else if(root.containsKey(UPDATE_SETTINGS) && mesh.isRoot()){
         #ifdef ROOT
         Serial.println("Updating settings");
         // Bridge has recieved a nodes updated settings add to list
         JsonObject obj = root[UPDATE_SETTINGS];
         addUpdatedSettings(obj);
         #endif
-    }else if(root.containsKey(BRIDGE_KNOWN)){
+    }
+    // Received a message from bridge on network with its id
+    else if(root.containsKey(BRIDGE_KNOWN)){
         // Recieved the id of bridge on the current network
         if(deviceSettings.bridgeID != root[BRIDGE_KNOWN]){
             setBridgeID(root[BRIDGE_KNOWN]);
         }
-    }else if(root.containsKey(RECIEVED_UPDATED_SETTINGS)){
+    }
+    // Received a message giving updated settings
+    else if(root.containsKey(RECIEVED_UPDATED_SETTINGS)){
         // TODO Read update settings locally
         // Return ack
-    }else if(root.containsKey(SERVER_RECIEVED_SETTINGS)){
+    }
+    // The settings sent to root from this node successfully updated on the server
+    else if(root.containsKey(SERVER_RECIEVED_SETTINGS)){
         clearSettings();
     }
 }

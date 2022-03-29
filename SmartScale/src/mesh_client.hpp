@@ -21,6 +21,9 @@
 #include "http_requests.hpp"
 #endif
 
+#define MESH_NAME_SIZE 5
+#define MESH_PASSWORD_SIZE 5
+
 #define   MESH_PORT       6666
 
 #define HOSTNAME "HTTP_BRIDGE"

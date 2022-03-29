@@ -11,9 +11,9 @@
 #include <HTTPClient.h>
 #include <ArduinoJson.h>
 
-#define   MESH_PREFIX     "whateverYouLike"
-#define   MESH_PASSWORD   "somethingSneaky"
-#define   MESH_PORT       5555
+#define   MESH_PREFIX     "SCALE_NETWORK_SCALE"
+#define   MESH_PASSWORD   "MESH_PASS_12345"
+#define   MESH_PORT       6666
 
 // Message types
 #define FIND_BRIDGE "FIND_BRIDGE"                               // When a node is looking for bridge

@@ -43,7 +43,7 @@ void setupHTTP(Scheduler &userScheduler){
         NULL,               // Parameter to pass
         1,                  // Task priority
         NULL,               // Task handle
-        0                   // Core you want to run the task on (0 or 1) -> (0 gives "Guru Meditation Error: Core  1 panic'ed (Interrupt wdt timeout on CPU1)")
+        1                   // Core you want to run the task on (0 or 1) -> (0 gives "Guru Meditation Error: Core  1 panic'ed (Interrupt wdt timeout on CPU1)")
     );
 }
 

@@ -38,6 +38,8 @@
 #define MENU_SETTINGS_CHECK_ROOT_CONFIRM 13
 #define MENU_SETTINGS_CHECK_NODE 14
 #define MENU_SETTINGS_CHECK_NODE_CONFIRM 15
+#define MENU_SETTINGS_UPDATE_NAME_PASS 16
+#define MENU_SETTINGS_UPDATE_NAME_PASS_CONFIRM 17
 
 #define CALIBRATE_ZERO 1
 #define CALIBRATE_SET_WEIGHT_PROMPT 2
@@ -46,6 +48,9 @@
 
 #define WEIGHT_SET_CURRENT 1
 #define WEIGHT_LIVE_SET 2
+
+#define UPDATE_MESH_NAME 1
+#define UPDATE_MESH_PASSWORD 2
 
 /**
  * @brief Function used to setup the UI pins and tasks
@@ -80,5 +85,9 @@ void oneMenuWeightSetPress(void);
 void twoMenuWeightSetPress(void);
 void threeMenuWeightSetPress(void);
 void saveReferenceWeightToStorage(void);
+void drawMeshInfoUpdate(void);
+void threeMenuMeshInfoUpdate(void);
+void twoMenuMeshInfoUpdate(void);
+void oneMenuMeshInfoUpdate(void);
 
 #endif
