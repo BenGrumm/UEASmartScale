@@ -60,16 +60,20 @@ void setKnownWeight(unsigned int knownVal){
  * 
  * @return unsigned int number of items on the scale
  */
-unsigned int getNumItems(void){
+double getNumItems(void){
     double ref = deviceSettings.referenceWeight;
     unsigned int numItems = deviceSettings.numItemsPerWeight;
-    return (unsigned int) round(getWeightGrams() / (ref / numItems));
+    return round(getWeightGrams() / (ref / numItems));
 }
 
 unsigned int lastKnownWeight = 2868;
 
 void checkNumItemsAndUpdate(void){
-    unsigned int currentNum = getNumItems();
+    double currentNum = getNumItems();
+
+    if(currentNum < 0){
+        currentNum = 0;
+    }
 
     if(lastKnownWeight != currentNum){
         updateNumStored(currentNum);

@@ -140,9 +140,13 @@ void drawScreen(void){
     switch(screenState){
         case(HOME):
             if(displayGrams){
-                numItems = (unsigned int) getWeightGrams();
+                numItems = getWeightGrams();
             }else{
                 numItems = getNumItems();
+            }
+
+            if(numItems < 0){
+                numItems = 0;
             }
 
             // Write number first as this uses isFirstDraw var

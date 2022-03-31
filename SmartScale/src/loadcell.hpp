@@ -12,7 +12,7 @@
  * 
  * @return unsigned int number of items on the scale
  */
-unsigned int getNumItems(void);
+double getNumItems(void);
 
 /**
  * @brief Function used for setup of the load cell
