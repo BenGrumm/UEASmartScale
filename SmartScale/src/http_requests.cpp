@@ -86,6 +86,8 @@ void uploadSettings(void* args){
         if(WiFi.status()== WL_CONNECTED){
             Serial.println("Connected - Updating");
             updateSettings();
+
+            getSettingsToUpdate();
         }else{
             Serial.println("Not Connected");
         }
@@ -97,6 +99,48 @@ void uploadSettings(void* args){
         Serial.println(" bytes");
 
     }
+}
+
+void addSettingsAckID(uint32_t id){
+    for(int i = 0; i < settingsUpdates.size(); i++){
+        if(settingsUpdates.getElement(i).containsKey("id") && settingsUpdates.getElement(i)["id"] == id){
+            settingsUpdates.getElement(i)[UPDATE_SETTINGS_SERVER] = false;
+            return;
+        }
+    }
+    
+    JsonObject obj = settingsUpdates.createNestedObject();
+    obj["id"] = id;
+    obj[UPDATE_SETTINGS_SERVER] = false;
+}
+
+bool getSettingsToUpdate(void){
+    if(deviceSettings.jwt != ""){
+        http.begin(SERVER_IP + "/core/settings/");
+        http.addHeader("Authorization", "JWT " + deviceSettings.jwt);
+        http.addHeader("Content-Type", "application/json");
+
+        int result = http.GET();
+
+        if(result == HTTP_CODE_OK){
+            deserializeJson(returnDoc, http.getString());
+            JsonArray jsonArr = returnDoc.as<JsonArray>();
+
+            for(JsonObject obj : jsonArr){
+                if(checkIfNodeInNetwork((uint32_t)obj["id"])){
+                    // Send this object to node of id
+                    sendSettingsToNode(obj);
+                }
+            }
+
+            return true;
+        }else if(result == HTTP_CODE_UNAUTHORIZED){
+            authorise();
+        }
+    }else{
+        authorise();
+    }
+    return false;
 }
 
 bool updateSettings(void){

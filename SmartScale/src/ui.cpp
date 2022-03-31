@@ -385,6 +385,26 @@ void drawMenu(void){
         case(MENU_SETTINGS_UPDATE_NAME_PASS_CONFIRM):
             drawMeshInfoUpdate();
             break;
+        case(MENU_SETTINGS_SHOW_ID):
+            if(isFirstDraw){
+                lcd.setCursor(0, 0);
+                lcd.print("  Show Mesh ID  ");
+                lcd.setCursor(0, 1);
+                lcd.print("<   continue   >");
+                isFirstDraw = false;
+            }
+            break;
+        case(MENU_SETTINGS_SHOW_ID_CONFIRM):
+            if(isFirstDraw){
+                lcd.setCursor(0, 0);
+                lcd.print("   ");
+                lcd.setCursor(3, 0);
+                lcd.print(getMeshID());
+                lcd.setCursor(0, 1);
+                lcd.print("      exit     ");
+                isFirstDraw = false;
+            }
+            break;
     }
 }
 
@@ -617,11 +637,17 @@ void IRAM_ATTR threeMenuPressed(void){
             drawUI.forceNextIteration();
             break;
         case(MENU_SETTINGS_UPDATE_NAME_PASS):
-            menuState = MENU_EXIT;
+            menuState = MENU_SETTINGS_SHOW_ID;
             drawUI.forceNextIteration();
             break;
         case(MENU_SETTINGS_UPDATE_NAME_PASS_CONFIRM):
             threeMenuMeshInfoUpdate();
+            break;
+        case(MENU_SETTINGS_SHOW_ID):
+            menuState = MENU_EXIT;
+            drawUI.forceNextIteration();
+            break;
+        case(MENU_SETTINGS_SHOW_ID_CONFIRM):
             break;
     }
 }
@@ -805,6 +831,14 @@ void IRAM_ATTR twoMenuPressed(void){
         case(MENU_SETTINGS_UPDATE_NAME_PASS_CONFIRM):
             twoMenuMeshInfoUpdate();
             break;
+        case(MENU_SETTINGS_SHOW_ID):
+            menuState = MENU_SETTINGS_SHOW_ID_CONFIRM;
+            drawUI.forceNextIteration();
+            break;
+        case(MENU_SETTINGS_SHOW_ID_CONFIRM):
+            menuState = MENU_SETTINGS_SHOW_ID;
+            drawUI.forceNextIteration();
+            break;
     }
 }
 
@@ -931,7 +965,7 @@ void IRAM_ATTR onePressed(void){
 void IRAM_ATTR oneMenuPressed(void){
     switch(menuState){
         case(MENU_EXIT):
-            menuState = MENU_SETTINGS_UPDATE_NAME_PASS;
+            menuState = MENU_SETTINGS_SHOW_ID;
             drawUI.forceNextIteration();
             break;
         case(MENU_SET_MIN):
@@ -993,6 +1027,12 @@ void IRAM_ATTR oneMenuPressed(void){
             break;
         case(MENU_SETTINGS_UPDATE_NAME_PASS_CONFIRM):
             oneMenuMeshInfoUpdate();
+            break;
+        case(MENU_SETTINGS_SHOW_ID):
+            menuState = MENU_SETTINGS_UPDATE_NAME_PASS;
+            drawUI.forceNextIteration();
+            break;
+        case(MENU_SETTINGS_SHOW_ID_CONFIRM):
             break;
     }
 }
@@ -1076,7 +1116,7 @@ void getLocalNumItemsPerWeightVal(void){
  * 
  */
 void setStorageNumItemsPerWeightVal(void){
-    setNumItemsPerWeightVal(numItemsSet);
+    setNumItemsPerWeightVal(numItemsSet, true);
 }
 
 /**
@@ -1084,6 +1124,6 @@ void setStorageNumItemsPerWeightVal(void){
  * 
  */
 void saveReferenceWeightToStorage(void){
-    setReferenceWeightOfItems(getWeightGrams());
+    setReferenceWeightOfItems(getWeightGrams(), true);
 }
 

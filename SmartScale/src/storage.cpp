@@ -34,6 +34,25 @@ void setupStorage(void){
     // Serial.print("Zero ");Serial.println(deviceSettings.zeroFactor);
 }
 
+void updateLocalSettings(JsonObject newSettings){
+    if(newSettings.containsKey(WEIGHT_PER_X_KEY) && newSettings[WEIGHT_PER_X_KEY] != deviceSettings.referenceWeight){
+        setReferenceWeightOfItems(newSettings[WEIGHT_PER_X_KEY], false);
+    }
+
+    if(newSettings.containsKey(NUM_ITEMS_PER_WEIGHT_KEY) && newSettings[NUM_ITEMS_PER_WEIGHT_KEY] != deviceSettings.numItemsPerWeight){
+        setNumItemsPerWeightVal(newSettings[NUM_ITEMS_PER_WEIGHT_KEY], false);
+    }
+
+    // if(newSettings.containsKey(MIN_NUM_ITEMS_KEY) && newSettings[MIN_NUM_ITEMS_KEY] != deviceSettings.minNumItems){
+    //     Serial.println("Update min num items");
+    //     // set(newSettings[NUM_ITEMS_PER_WEIGHT_KEY]);
+    // }
+
+    // if(newSettings.containsKey(OK_NUM_ITEMS_KEY) && newSettings[OK_NUM_ITEMS_KEY] != deviceSettings.okNumItems){
+    //     set(newSettings[OK_NUM_ITEMS_KEY]);
+    // }
+}
+
 void setBridgeID(uint32_t id){
     // Open namespace for read and write
     preferences.begin(PREF_NAMESPACE, false);
@@ -202,13 +221,16 @@ long getZeroFactorMem(void){
     return val;
 }
 
-void setNumItemsPerWeightVal(unsigned int numItems){
+void setNumItemsPerWeightVal(unsigned int numItems, bool updateServer){
     // Open namespace for read and write
     preferences.begin(PREF_NAMESPACE, false);
 
     deviceSettings.numItemsPerWeight = numItems;
     preferences.putUInt(SETTINGS_NUM_VALUES_PER, numItems);
-    addSettingsItemForMeshToSend(NUM_ITEMS_PER_WEIGHT_KEY, numItems);
+
+    if(updateServer){
+        addSettingsItemForMeshToSend(NUM_ITEMS_PER_WEIGHT_KEY, numItems);
+    }
 
     preferences.end();
 }
@@ -224,13 +246,16 @@ unsigned int getNumItemsPerWeightValMem(void){
     return val;
 }
 
-void setReferenceWeightOfItems(double itemsWeightGrams){
+void setReferenceWeightOfItems(double itemsWeightGrams, bool updateServer){
     // Open namespace for read and write
     preferences.begin(PREF_NAMESPACE, false);
 
     deviceSettings.referenceWeight = itemsWeightGrams;
     preferences.putDouble(SETTINGS_WEIGHT_REFERENCE, itemsWeightGrams);
-    addSettingsItemForMeshToSend(WEIGHT_PER_X_KEY, itemsWeightGrams);
+
+    if(updateServer){
+        addSettingsItemForMeshToSend(WEIGHT_PER_X_KEY, itemsWeightGrams);
+    }
 
     preferences.end();
 }

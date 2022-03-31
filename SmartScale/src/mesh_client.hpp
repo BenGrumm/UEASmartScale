@@ -33,6 +33,7 @@
 #define BRIDGE_KNOWN "BRIDGE_DECLERATION"                       // When the bridge is telling its id
 #define UPDATE_SETTINGS "UPDATE_SETTINGS"                       // When a node is updating it's settings
 #define RECIEVED_UPDATED_SETTINGS "RECIEVED_UPDATED_SETTINGS"   // When a node is recieving settings updates
+#define ACK_RECEIVED_SETTINGS "ACK_RECEIVED"                    // When a node received new settings from server and it responds ack
 #define SERVER_RECIEVED_SETTINGS "SERVER_RECIEVED_SETTINGS"     // When the server acks your updated settings
 
 #define NUM_STORED_KEY "numStored"
@@ -40,6 +41,7 @@
 #define NUM_ITEMS_PER_WEIGHT_KEY "numItemsPerWeight"
 #define MIN_NUM_ITEMS_KEY "minNumItems"
 #define OK_NUM_ITEMS_KEY "okNumItems"
+#define UPDATE_SETTINGS_SERVER "updateSettings"
 
 /**
  * @brief Function to set up the devices mesh client
@@ -65,6 +67,8 @@ void sendUpdatedSettings(void);
 void askForBridge(void);
 int getNumConnectedNodes(void);
 
+void ackUpdatedSettings(void);
+
 void updateNumStored(unsigned int numItems);
 
 void addSettingsItemForMeshToSend(String key, String value);
@@ -83,6 +87,9 @@ void clearSettings(void);
  * @return false if node knows about no bridge or bridge id not in current network
  */
 bool checkIfBridgeExists(void);
+bool checkIfNodeInNetwork(uint32_t nodeID);
+void sendSettingsToNode(JsonObject settings);
+uint32_t getMeshID(void);
 
 bool getIfBridgeExists(void);
 

@@ -16,5 +16,7 @@ void uploadSettings(void* args);
 void addUpdatedSettings(JsonObject scaleSettings);
 bool updateSettings(void);
 bool hadSuccessfulLogin(void);
+bool getSettingsToUpdate(void);
+void addSettingsAckID(uint32_t id);
 
 #endif

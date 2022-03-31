@@ -4,11 +4,14 @@ painlessMesh  mesh;
 IPAddress myIP(0,0,0,0);
 
 DynamicJsonDocument updatedSettings(2048);
+#ifdef ROOT
+DynamicJsonDocument sentNodeSettings(1024);
+JsonObject objectToSendSettings;
+#endif
 bool hasUpdatedSinceLastSend = false;
 bool bridgeExists = false;
 
 JsonObject updatedSettingsObject;
-JsonObject updatedItemCountObjects;
 
 Task periodicSettingsUpdates(TASK_SECOND * 30, TASK_FOREVER, &sendUpdatedSettings);
 
@@ -36,6 +39,8 @@ void setupMesh(Scheduler &userScheduler){
     mesh.setRoot(true);
     // This node and all other nodes should ideally know the mesh contains a root, so call this on all nodes
     mesh.setContainsRoot(true);
+
+    objectToSendSettings = updatedSettings.createNestedObject(RECIEVED_UPDATED_SETTINGS);
 
     #endif
 
@@ -99,11 +104,16 @@ void receivedCallback(const uint32_t &from, const String &msg){
     // Received a message giving updated settings
     else if(root.containsKey(RECIEVED_UPDATED_SETTINGS)){
         // TODO Read update settings locally
+        updateLocalSettings(root[RECIEVED_UPDATED_SETTINGS]);
         // Return ack
+        ackUpdatedSettings();
     }
     // The settings sent to root from this node successfully updated on the server
     else if(root.containsKey(SERVER_RECIEVED_SETTINGS)){
         clearSettings();
+    }
+    else if(root.containsKey(ACK_RECEIVED_SETTINGS)){
+        addSettingsAckID(from);
     }
 }
 
@@ -113,6 +123,42 @@ void clearSettings(void){
         Serial.println("Have Cleared");
         updatedSettingsObject.clear();
     }
+}
+
+void ackUpdatedSettings(void){
+    if(mesh.isRoot()){
+        Serial.println("Is Root Update Ack");
+        addSettingsAckID(mesh.getNodeId());
+    }else{
+        mesh.sendSingle(deviceSettings.bridgeID, "{\"ACK_RECEIVED\":true");
+    }
+}
+
+void sendSettingsToNode(JsonObject settings){
+    Serial.print("Sending updated settings to node ");
+    Serial.println((uint32_t)settings["id"]);
+
+    #ifdef ROOT
+
+    if(((uint32_t)settings["id"]) == mesh.getNodeId()){
+        Serial.println("ID is me :)");
+        updateLocalSettings(settings);
+        ackUpdatedSettings();
+        return;
+    }
+
+    sentNodeSettings.clear();
+    JsonObject obj = sentNodeSettings.createNestedObject(RECIEVED_UPDATED_SETTINGS);
+    obj.set(settings);
+
+    String msg;
+
+    serializeJson(sentNodeSettings, msg);
+    Serial.println(msg);
+
+    mesh.sendSingle((uint32_t)settings["id"], msg);
+
+    #endif
 }
 
 void sendUpdatedSettings(void){
@@ -150,17 +196,11 @@ void rootSendUpdateAck(uint32_t id){
 
 bool checkIfBridgeExists(void){
     if(deviceSettings.bridgeID != 0){
-        SimpleList<uint32_t> nl = mesh.getNodeList(true);
-        SimpleList<uint32_t>::iterator itr = nl.begin();
-
-        while(itr != nl.end()) {
-            if(*itr == deviceSettings.bridgeID){
-                Serial.print("Checked And Found Bridge ID In List - ");
-                Serial.println(*itr);
-                bridgeExists = true;
-                return true;
-            }
-            itr++;
+        if(checkIfNodeInNetwork(deviceSettings.bridgeID)){
+            Serial.print("Checked And Found Bridge ID In List - ");
+            Serial.println(deviceSettings.bridgeID);
+            bridgeExists = true;
+            return true;
         }
     }
 
@@ -169,6 +209,24 @@ bool checkIfBridgeExists(void){
     bridgeExists = false;
 
     return false;
+}
+
+bool checkIfNodeInNetwork(uint32_t nodeID){
+    SimpleList<uint32_t> nl = mesh.getNodeList(true);
+    SimpleList<uint32_t>::iterator itr = nl.begin();
+
+    while(itr != nl.end()) {
+        if(*itr == nodeID){
+            return true;
+        }
+        itr++;
+    }
+
+    return false;
+}
+
+uint32_t getMeshID(void){
+    return mesh.getNodeId();
 }
 
 bool getIfBridgeExists(void){

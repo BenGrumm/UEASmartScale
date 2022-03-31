@@ -56,6 +56,7 @@ extern Settings deviceSettings;
  */
 void setupStorage(void);
 
+void updateLocalSettings(JsonObject newSettings);
 
 // Bridge ID
 void setBridgeID(uint32_t id);
@@ -123,7 +124,7 @@ long getZeroFactorMem(void);
  * 
  * @param numItems num items to be stored
  */
-void setNumItemsPerWeightVal(unsigned int numItems);
+void setNumItemsPerWeightVal(unsigned int numItems, bool updateServer);
 /**
  * @brief Get the number of items per weight value
  * 
@@ -136,7 +137,7 @@ unsigned int getNumItemsPerWeightValMem(void);
  * 
  * @param itemsWeightGrams weight of the item or items in grams
  */
-void setReferenceWeightOfItems(double itemsWeightGrams);
+void setReferenceWeightOfItems(double itemsWeightGrams, bool updateServer);
 /**
  * @brief Get the weight of item(s) used for calculating weight of single item along with NumItemsPerWeight
  * 
