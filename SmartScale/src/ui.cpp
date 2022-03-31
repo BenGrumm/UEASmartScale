@@ -6,6 +6,10 @@ unsigned long button2LastPress = 0;
 unsigned long button3LastPress = 0;
 unsigned long debounceDelay = 200;
 
+uint8_t button1 = 0;
+uint8_t button2 = 0;
+uint8_t button3 = 0;
+
 unsigned int screenState = HOME; // current lcd state
 unsigned int menuState = MENU_EXIT;
 unsigned int calibrateState = CALIBRATE_ZERO;
@@ -41,6 +45,8 @@ byte Cross[] = {
     B00000
 };
 
+Task checkButton(TASK_SECOND / 500, TASK_FOREVER, &checkButtonStates);
+
 Task drawUI(TASK_SECOND * 1, TASK_FOREVER, &drawScreen);
 Task zeroScale(TASK_IMMEDIATE, TASK_ONCE, &zeroTare);
 Task setKnownVal(TASK_IMMEDIATE, TASK_ONCE, &calibrateScale);
@@ -64,18 +70,25 @@ void setupUI(Scheduler &userScheduler, int button1Pin, int button2Pin, int butto
     // Use floating pin value as pseudo random seed (used in testing)
     // randomSeed(analogRead(0));
 
+    button1 = button1Pin;
+    button2 = button2Pin;
+    button3 = button3Pin;
+
     // Setup buttons and their interrupts
     pinMode(button1Pin, INPUT_PULLUP);
-    attachInterrupt(digitalPinToInterrupt(button1Pin), buttonPress_one, FALLING);
     pinMode(button2Pin, INPUT_PULLUP);
-    attachInterrupt(digitalPinToInterrupt(button2Pin), buttonPress_two, FALLING);
     pinMode(button3Pin, INPUT_PULLUP);
-    attachInterrupt(digitalPinToInterrupt(button3Pin), buttonPress_three, FALLING);
+
+    // attachInterrupt(digitalPinToInterrupt(button1Pin), buttonPress_one, FALLING);
+    // attachInterrupt(digitalPinToInterrupt(button2Pin), buttonPress_two, FALLING);
+    // attachInterrupt(digitalPinToInterrupt(button3Pin), buttonPress_three, FALLING);
 
     // Setup tasks
     Serial.println("Add");
     userScheduler.addTask(drawUI);
+    userScheduler.addTask(checkButton);
     drawUI.enable();
+    checkButton.enable();
     Serial.println("Done");
 
     userScheduler.addTask(zeroScale); // enabled in interrupt
@@ -83,6 +96,25 @@ void setupUI(Scheduler &userScheduler, int button1Pin, int button2Pin, int butto
     userScheduler.addTask(getLocalNumItem);
     userScheduler.addTask(setStorageNumItem);
     userScheduler.addTask(setReferenceWeight);
+
+}
+
+/**
+ * @brief For non interrupt buttons
+ * 
+ */
+void checkButtonStates(void){
+    if(digitalRead(button1) == LOW){
+        buttonPress_one();
+    }
+
+    if(digitalRead(button2) == LOW){
+        buttonPress_two();
+    }
+
+    if(digitalRead(button3) == LOW){
+        buttonPress_three();
+    }
 }
 
 // Buffer used for drawing to the LCD (16 chars wide)

@@ -89,5 +89,6 @@ void drawMeshInfoUpdate(void);
 void threeMenuMeshInfoUpdate(void);
 void twoMenuMeshInfoUpdate(void);
 void oneMenuMeshInfoUpdate(void);
+void checkButtonStates(void);
 
 #endif

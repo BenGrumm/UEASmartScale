@@ -12,6 +12,6 @@
 void setupBTScan(Scheduler& userScheduler);
 
 void foundDevices(BLEScanResults foundDevices);
-// void scanDevices(void* args);
+void scanDevices(void* args);
 
 #endif
