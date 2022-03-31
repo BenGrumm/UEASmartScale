@@ -503,6 +503,7 @@ void IRAM_ATTR drawMeshInfoUpdate(void){
                 isFirstDraw = false;
                 lcd.setCursor(6 + updateCursorPos, 0);
                 lcd.blink_on();
+                lcd.cursor_on();
             }
             break;
         case(UPDATE_MESH_PASSWORD):
@@ -514,6 +515,7 @@ void IRAM_ATTR drawMeshInfoUpdate(void){
                 isFirstDraw = false;
                 lcd.setCursor(6 + updateCursorPos, 0);
                 lcd.blink_on();
+                lcd.cursor_on();
             }
             break;
     }
@@ -875,6 +877,8 @@ void IRAM_ATTR twoMenuMeshInfoUpdate(void){
                 meshUpdateSetState = UPDATE_MESH_NAME;
                 menuState = MENU_SETTINGS_UPDATE_NAME_PASS;
                 updateCursorPos = 0;
+                lcd.blink_off();
+                lcd.cursor_off();
                 Serial.println("Before = " + deviceSettings.meshName + ", " + deviceSettings.meshPassword + " - After = " + meshName + ", " + meshPassword);
             }
             break;
