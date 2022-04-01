@@ -51,6 +51,7 @@ void loopMesh(void);
 void sendUpdatedSettings(void);
 void askForBridge(void);
 void newConnectionCallback(uint32_t nodeId);
+void ackUpdatedSettings(void);
 
 void updateNumStored(unsigned int numItems);
 

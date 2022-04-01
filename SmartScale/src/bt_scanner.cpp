@@ -5,7 +5,7 @@ BLEScan* pBLEScan;
 
 class MyAdvertisedDeviceCallbacks: public BLEAdvertisedDeviceCallbacks {
     void onResult(BLEAdvertisedDevice advertisedDevice) {
-        Serial.printf("Advertised Device: %s \n", advertisedDevice.toString().c_str());
+        Serial.printf("Advertised Device: %s, %d \n", advertisedDevice.toString().c_str(), advertisedDevice.getRSSI());
     }
 };
 
@@ -14,8 +14,8 @@ void setupBTScan(Scheduler& userScheduler){
     pBLEScan = BLEDevice::getScan(); //create new scan
     pBLEScan->setAdvertisedDeviceCallbacks(new MyAdvertisedDeviceCallbacks());
     pBLEScan->setActiveScan(true); //active scan uses more power, but get results faster
-    pBLEScan->setInterval(50);
-    pBLEScan->setWindow(49);  // less or equal setInterval value
+    pBLEScan->setInterval(500);
+    pBLEScan->setWindow(100);  // less or equal setInterval value
 
     // pBLEScan->start(scanTime, foundDevices, false);
     xTaskCreatePinnedToCore(
@@ -45,8 +45,10 @@ void scanDevices(void* args){
         // Serial.println("Scan done!");
         // pBLEScan->clearResults();   // delete results fromBLEScan buffer to release memory
 
+        Serial.println("Start Scan.");
+
         bool ok = pBLEScan->start(scanTime, foundDevices, false);
 
-        vTaskDelay(10000 / portTICK_PERIOD_MS);
+        vTaskDelay(20000 / portTICK_PERIOD_MS);
     }
 }

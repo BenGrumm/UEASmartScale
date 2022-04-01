@@ -8,5 +8,6 @@
 void setupSimulator(Scheduler &scheduler);
 void updateRandomNumStored(void);
 void updateRandomSettings(void);
+void gotSettingsFromServer(JsonObject obj);
 
 #endif

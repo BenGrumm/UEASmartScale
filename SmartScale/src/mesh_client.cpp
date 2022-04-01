@@ -112,7 +112,8 @@ void receivedCallback(const uint32_t &from, const String &msg){
     else if(root.containsKey(SERVER_RECIEVED_SETTINGS)){
         clearSettings();
     }
-    else if(root.containsKey(ACK_RECEIVED_SETTINGS)){
+    // Root receives this if node successfully received its settings update
+    else if(root.containsKey(ACK_RECEIVED_SETTINGS) && mesh.isRoot()){
         addSettingsAckID(from);
     }
 }

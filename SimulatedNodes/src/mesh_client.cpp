@@ -66,10 +66,15 @@ void receivedCallback(const uint32_t &from, const String &msg){
         if(bridgeID != root[BRIDGE_KNOWN]){
             bridgeID = root[BRIDGE_KNOWN];
         }
-    }else if(root.containsKey(RECIEVED_UPDATED_SETTINGS)){
+    }
+    // Received a message giving updated settings
+    else if(root.containsKey(RECIEVED_UPDATED_SETTINGS)){
         // TODO Read update settings locally
+        gotSettingsFromServer(root[RECIEVED_UPDATED_SETTINGS]);
         // Return ack
-    }else if(root.containsKey(SERVER_RECIEVED_SETTINGS)){
+        ackUpdatedSettings();
+    }
+    else if(root.containsKey(SERVER_RECIEVED_SETTINGS)){
         clearSettings();
     }
 }
@@ -122,6 +127,12 @@ bool checkIfBridgeExists(void){
     askForBridge();
 
     return false;
+}
+
+void ackUpdatedSettings(void){
+    if(!mesh.isRoot()){
+        mesh.sendSingle(bridgeID, "{\"ACK_RECEIVED\":true");
+    }
 }
 
 void askForBridge(void){

@@ -918,6 +918,20 @@ void IRAM_ATTR twoMenuMeshInfoUpdate(void){
                 lcd.blink_off();
                 lcd.cursor_off();
                 Serial.println("Before = " + deviceSettings.meshName + ", " + deviceSettings.meshPassword + " - After = " + meshName + ", " + meshPassword);
+                bool restart = false;
+                if(deviceSettings.meshName != meshName){
+                    saveMeshName(meshName);
+                    restart = true;
+                }
+
+                if(deviceSettings.meshPassword != meshPassword){
+                    saveMeshPassword(meshPassword);
+                    restart = true;
+                }
+
+                if(restart){
+                    ESP.restart();
+                }
             }
             break;
     }

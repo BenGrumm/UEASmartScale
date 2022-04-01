@@ -15,3 +15,7 @@ void updateRandomNumStored(void){
 void updateRandomSettings(void){
     Serial.println("Updating Settings");
 }
+
+void gotSettingsFromServer(JsonObject obj){
+    
+}

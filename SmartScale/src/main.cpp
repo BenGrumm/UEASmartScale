@@ -39,7 +39,7 @@ void setup(){
   setupServer(getMeshAPIP());
   setupHTTP(userScheduler);
   #endif
-  // setupBTScan(userScheduler);
+  setupBTScan(userScheduler);
 
   Serial.print("setup() running on core ");
   Serial.println(xPortGetCoreID());
