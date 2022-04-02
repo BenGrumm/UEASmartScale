@@ -19,6 +19,11 @@ char* html = "\
 </form>\
 ";
 
+/**
+ * @brief Initialise local server ready for use
+ * 
+ * @param meshAPIP ip of the mesh
+ */
 void setupServer(IPAddress meshAPIP){
 
     myAPIP = meshAPIP;
@@ -55,6 +60,7 @@ void setupServer(IPAddress meshAPIP){
             }
         }
 
+        // Updating WIFI info requires restart to use
         if(shouldRestart){
             ESP.restart();
         }
@@ -62,14 +68,27 @@ void setupServer(IPAddress meshAPIP){
 
 }
 
+/**
+ * @brief Function to get a string of the ip and port the http server is on so you can connect
+ * 
+ * @return String of the full ip and port number
+ */
 String getAPIPStr(void){
     return myAPIP.toString() + ":" + String(AP_SERVER_PORT);
 }
 
+/**
+ * @brief Function to turn the http server on
+ * 
+ */
 void httpServerOn(){
     server.begin();
 }
 
+/**
+ * @brief Function to stop hosting the http server
+ * 
+ */
 void httpServerOff(){
     server.end();
 }

@@ -17,12 +17,17 @@ Task periodicSettingsUpdates(TASK_SECOND * 30, TASK_FOREVER, &sendUpdatedSetting
 
 unsigned int lastNumItemsSent = 941; // Random initializer as value likely to be 0 at setup
 
+/**
+ * @brief Function to set up the devices mesh client
+ * 
+ * @param userScheduler the scheduler that the mesh will update on every loop
+ */
 void setupMesh(Scheduler &userScheduler){
     mesh.setDebugMsgTypes( ERROR | STARTUP | CONNECTION );  // set before init() so that you can see startup messages
 
     // Channel set to 6. Make sure to use the same channel for your mesh and for you other
     // network (STATION_SSID)
-    mesh.init("SCALE_NETWORK_" + deviceSettings.meshName, "MESH_PASS_" + deviceSettings.meshPassword, &userScheduler, MESH_PORT, WIFI_AP_STA, 6);
+    mesh.init("MESH_NETWORK_" + deviceSettings.meshName, "MESH_PASS_" + deviceSettings.meshPassword, &userScheduler, MESH_PORT, WIFI_AP_STA, 6);
     // mesh.init(MESH_PREFIX, MESH_PASSWORD, &userScheduler, MESH_PORT, WIFI_AP_STA, 6);
     mesh.onReceive(&receivedCallback);
 
@@ -46,9 +51,11 @@ void setupMesh(Scheduler &userScheduler){
 
     updatedSettingsObject = updatedSettings.createNestedObject(UPDATE_SETTINGS);
 
+    // If first startup send initial settings
     if(deviceSettings.initialisation){
         addSettingsItemForMeshToSend(NUM_ITEMS_PER_WEIGHT_KEY, deviceSettings.numItemsPerWeight);
         addSettingsItemForMeshToSend(WEIGHT_PER_X_KEY, deviceSettings.referenceWeight);
+        // TODO Set initialisation to false
     }
 
     userScheduler.addTask(periodicSettingsUpdates);
@@ -56,6 +63,11 @@ void setupMesh(Scheduler &userScheduler){
 
 }
 
+/**
+ * @brief Get the Mesh APIP object
+ * 
+ * @return IPAddress that is used by the mesh
+ */
 IPAddress getMeshAPIP(void){
     return IPAddress(mesh.getAPIP());
 }
@@ -118,6 +130,11 @@ void receivedCallback(const uint32_t &from, const String &msg){
     }
 }
 
+/**
+ * @brief when the settings are sent to root then server and ack received clear
+ * the updates 
+ * 
+ */
 void clearSettings(void){
     Serial.println("Clearing settings");
     if(!hasUpdatedSinceLastSend){
@@ -126,6 +143,10 @@ void clearSettings(void){
     }
 }
 
+/**
+ * @brief Send an ack notifying received settings to root
+ * 
+ */
 void ackUpdatedSettings(void){
     if(mesh.isRoot()){
         Serial.println("Is Root Update Ack");
@@ -135,6 +156,11 @@ void ackUpdatedSettings(void){
     }
 }
 
+/**
+ * @brief Send updated settings received from server to node
+ * 
+ * @param settings json object (must have "id" value)
+ */
 void sendSettingsToNode(JsonObject settings){
     Serial.print("Sending updated settings to node ");
     Serial.println((uint32_t)settings["id"]);
@@ -162,6 +188,10 @@ void sendSettingsToNode(JsonObject settings){
     #endif
 }
 
+/**
+ * @brief Send updated settings stored in buffer to root if exists
+ * 
+ */
 void sendUpdatedSettings(void){
     if(updatedSettingsObject.size() > 0 && checkIfBridgeExists()){
         Serial.println("Is Settings To Update And Bridge Exists");
@@ -187,6 +217,11 @@ void sendUpdatedSettings(void){
     }
 }
 
+/**
+ * @brief Send ack to node that the server successfully recevied its settings
+ * 
+ * @param id of the node to send ack to
+ */
 void rootSendUpdateAck(uint32_t id){
     if(id == mesh.getNodeId()){
         clearSettings();
@@ -195,6 +230,12 @@ void rootSendUpdateAck(uint32_t id){
     }
 }
 
+/**
+ * @brief Check if the bridge exists on current network
+ * 
+ * @return true if bridge found
+ * @return false if bridge not found
+ */
 bool checkIfBridgeExists(void){
     if(deviceSettings.bridgeID != 0){
         if(checkIfNodeInNetwork(deviceSettings.bridgeID)){
@@ -212,6 +253,13 @@ bool checkIfBridgeExists(void){
     return false;
 }
 
+/**
+ * @brief Function to check if a node exists on network
+ * 
+ * @param nodeID id of node to check on network
+ * @return true if node found
+ * @return false if node not found
+ */
 bool checkIfNodeInNetwork(uint32_t nodeID){
     SimpleList<uint32_t> nl = mesh.getNodeList(true);
     SimpleList<uint32_t>::iterator itr = nl.begin();
@@ -226,49 +274,80 @@ bool checkIfNodeInNetwork(uint32_t nodeID){
     return false;
 }
 
+/**
+ * @brief Get the mesh id
+ * 
+ * @return uint32_t id number
+ */
 uint32_t getMeshID(void){
     return mesh.getNodeId();
 }
 
+/**
+ * @brief check if the bridge has been found and successfully sent to
+ * 
+ * @return true if bridge found
+ * @return false if bridge not yet been found / used
+ */
 bool getIfBridgeExists(void){
     return bridgeExists;
 }
 
+/**
+ * @brief Get the Num Connected Nodes on network
+ * 
+ * @return int number of nodes
+ */
 int getNumConnectedNodes(void){
     return mesh.getNodeList(true).size();
 }
 
+/**
+ * @brief update the number of items stored in the buffer object
+ * 
+ * @param numItems 
+ */
 void updateNumStored(unsigned int numItems){
     updatedSettingsObject[NUM_STORED_KEY] = numItems;
     hasUpdatedSinceLastSend = true;
 }
 
+/**
+ * @brief Functions for updating settings in the buffer object
+ * 
+ * @param key used to set value in object
+ * @param value to set
+ */
 void addSettingsItemForMeshToSend(String key, String value){
     updatedSettingsObject[key] = value;
     hasUpdatedSinceLastSend = true;
 }
-
 void addSettingsItemForMeshToSend(String key, int value){
     updatedSettingsObject[key] = value;
     hasUpdatedSinceLastSend = true;
 }
-
 void addSettingsItemForMeshToSend(String key, double value){
     updatedSettingsObject[key] = value;
     hasUpdatedSinceLastSend = true;
 }
-
 void addSettingsItemForMeshToSend(String key, unsigned int value){
     updatedSettingsObject[key] = value;
     hasUpdatedSinceLastSend = true;
 }
 
-
+/**
+ * @brief Broadcast to the network the need to find bridge
+ * 
+ */
 void askForBridge(void){
     // TODO replace this with proper enum
     mesh.sendBroadcast("{ \"FIND_BRIDGE\" : true }", true);
 }
 
+/**
+ * @brief Function to update mesh in main loop
+ * 
+ */
 void loopMesh(){
     mesh.update();
 }

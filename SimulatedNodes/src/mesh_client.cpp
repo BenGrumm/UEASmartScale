@@ -17,7 +17,7 @@ void setupMesh(Scheduler &userScheduler){
 
     // Channel set to 6. Make sure to use the same channel for your mesh and for you other
     // network (STATION_SSID)
-    mesh.init(MESH_PREFIX, MESH_PASSWORD, &userScheduler, MESH_PORT, WIFI_AP_STA, 6);
+    mesh.init("MESH_NETWORK_SCALE", "MESH_PASS_12345", &userScheduler, MESH_PORT, WIFI_AP_STA, 6);
     // mesh.init(MESH_PREFIX, MESH_PASSWORD, MESH_PORT, WIFI_AP_STA, 6);
     mesh.onReceive(&receivedCallback);
     mesh.onNewConnection(&newConnectionCallback);

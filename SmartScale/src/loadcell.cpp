@@ -5,6 +5,13 @@ unsigned int userKnowWeight = 1000; // Known weight in grams
 
 Task checkAndUpdateScaleNum(TASK_SECOND * 30, TASK_FOREVER, &checkNumItemsAndUpdate);
 
+/**
+ * @brief Setup the communication with HX711 and implement stored settings
+ * 
+ * @param userScheduler scheduler to make periodic reading of sensor
+ * @param dataPin pin to use for data to HX711
+ * @param clkPin pin to use for clock to HX711
+ */
 void setupLC(Scheduler &userScheduler, unsigned int dataPin, unsigned int clkPin){
     scale.begin(dataPin, clkPin);
 
@@ -21,10 +28,15 @@ void setupLC(Scheduler &userScheduler, unsigned int dataPin, unsigned int clkPin
     scale.set_scale(calVal);
     scale.set_offset(zeroFac); //Used for taring / zeroing
 
+    // Create task for reading values
     userScheduler.addTask(checkAndUpdateScaleNum);
     checkAndUpdateScaleNum.enableDelayed(TASK_SECOND * 10);
 }
 
+/**
+ * @brief When called will zero the scale with the current weight on it
+ * 
+ */
 void zeroTare(void){
     Serial.println("Zero");
     long avg = scale.read_average();
@@ -34,14 +46,28 @@ void zeroTare(void){
     scale.set_offset(avg);
 }
 
+/**
+ * @brief Get the weight on the scale in grams
+ * 
+ * @return double 
+ */
 double getWeightGrams(void){
     return scale.get_units();
 }
 
+/**
+ * @brief Read the scale value and store in memory
+ * 
+ */
 void readScale(void){
     saveWeight(scale.get_units());
 }
 
+/**
+ * @brief Will calibrate the scale based on weight current on scale and
+ *        value stored as the known val
+ * 
+ */
 void calibrateScale(void){
     Serial.println("Calibrate");
     scale.set_scale(1);
@@ -51,6 +77,11 @@ void calibrateScale(void){
     setCalibrationVal(calibrationFactor);
 }
 
+/**
+ * @brief Set the Known Weight object
+ * 
+ * @param knownVal value to store
+ */
 void setKnownWeight(unsigned int knownVal){
     userKnowWeight = knownVal;
 }
@@ -68,6 +99,11 @@ double getNumItems(void){
 
 unsigned int lastKnownWeight = 2868;
 
+/**
+ * @brief Get the current number of items and if it's changed from last known value, if it has
+ * send to the mesh client to be sent to root and updated on the server
+ * 
+ */
 void checkNumItemsAndUpdate(void){
     double currentNum = getNumItems();
 

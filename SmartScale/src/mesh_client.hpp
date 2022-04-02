@@ -5,12 +5,7 @@
 #include "painlessMesh.h"
 #include "storage.hpp"
 
-#ifdef ESP8266
-#include "Hash.h"
-#include <ESPAsyncTCP.h>
-#else
 #include <AsyncTCP.h>
-#endif
 #include <ESPAsyncWebServer.h>
 #include <WiFi.h>
 #include <HTTPClient.h>
@@ -24,7 +19,7 @@
 #define MESH_NAME_SIZE 5
 #define MESH_PASSWORD_SIZE 5
 
-#define   MESH_PORT       6666
+#define MESH_PORT 6666
 
 #define HOSTNAME "HTTP_BRIDGE"
 
@@ -63,21 +58,37 @@ IPAddress getMeshAPIP(void);
  */
 void loopMesh(void);
 
-void sendUpdatedSettings(void);
-void askForBridge(void);
+/**
+ * @brief Get the Num Connected Nodes on network
+ * 
+ * @return int number of nodes
+ */
 int getNumConnectedNodes(void);
 
-void ackUpdatedSettings(void);
-
+/**
+ * @brief update the number of items stored in the buffer object
+ * 
+ * @param numItems 
+ */
 void updateNumStored(unsigned int numItems);
 
+/**
+ * @brief Functions for updating settings in the buffer object
+ * 
+ * @param key used to set value in object
+ * @param value to set
+ */
 void addSettingsItemForMeshToSend(String key, String value);
 void addSettingsItemForMeshToSend(String key, int value);
 void addSettingsItemForMeshToSend(String key, double value);
 void addSettingsItemForMeshToSend(String key, unsigned int value);
 
+/**
+ * @brief Send ack to node that the server successfully recevied its settings
+ * 
+ * @param id of the node to send ack to
+ */
 void rootSendUpdateAck(uint32_t id);
-void clearSettings(void);
 
 /**
  * @brief Function that will iterate through nodes in the mesh and check if current node 
@@ -87,12 +98,36 @@ void clearSettings(void);
  * @return false if node knows about no bridge or bridge id not in current network
  */
 bool checkIfBridgeExists(void);
-bool checkIfNodeInNetwork(uint32_t nodeID);
+
+/**
+ * @brief Send updated settings received from server to node
+ * 
+ * @param settings json object (must have "id" value)
+ */
 void sendSettingsToNode(JsonObject settings);
+
+/**
+ * @brief Get the mesh id
+ * 
+ * @return uint32_t id number
+ */
 uint32_t getMeshID(void);
 
+/**
+ * @brief check if the bridge has been found and successfully sent to
+ * 
+ * @return true if bridge found
+ * @return false if bridge not yet been found / used
+ */
 bool getIfBridgeExists(void);
 
+// Internal functions
+
+void sendUpdatedSettings(void);
+void askForBridge(void);
+void ackUpdatedSettings(void);
+void clearSettings(void);
+bool checkIfNodeInNetwork(uint32_t nodeID);
 void receivedCallback(const uint32_t &from, const String &msg);
 
 #endif

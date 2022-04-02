@@ -23,6 +23,7 @@ String meshPassword = "12345";
 bool isFirstDraw = true;
 bool displayGrams = false;
 
+// Custom characters for LCD
 byte Check[] = {
     B00000,
     B00001,
@@ -513,7 +514,7 @@ void drawWeightSet(void){
 }
 
 /**
- * @brief 
+ * @brief used for drawing menu items to update name and password of mesh
  * 
  */
 void IRAM_ATTR drawMeshInfoUpdate(void){
@@ -691,7 +692,7 @@ void IRAM_ATTR threeMenuWeightSetPress(void){
 }
 
 /**
- * @brief 
+ * @brief button pressed when UI is updating name and password of mesh
  * 
  */
 void IRAM_ATTR threeMenuMeshInfoUpdate(void){
@@ -897,7 +898,7 @@ void IRAM_ATTR twoMenuWeightSetPress(void){
 }
 
 /**
- * @brief 
+ * @brief button two pressed when UI is updating name and password of mesh
  * 
  */
 void IRAM_ATTR twoMenuMeshInfoUpdate(void){
@@ -1090,7 +1091,7 @@ void IRAM_ATTR oneMenuWeightSetPress(void){
 }
 
 /**
- * @brief 
+ * @brief button three pressed when UI is updating name and password of mesh
  * 
  */
 void IRAM_ATTR oneMenuMeshInfoUpdate(void){

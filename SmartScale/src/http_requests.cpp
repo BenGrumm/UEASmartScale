@@ -13,6 +13,12 @@ bool hasAuthed = false;
 
 // Task tryAuth(TASK_SECOND * 10, TASK_FOREVER, &tryConnect);
 
+/**
+ * @brief Setup json objects used in http_request functions. Create recurrent task on 
+ * other core for making requqests.
+ * 
+ * @param userScheduler * was switched to rtos function so no longer needed
+ */
 void setupHTTP(Scheduler &userScheduler){
     settingsParent = outgoingSettings.createNestedObject();
     settingsUpdates = settingsParent.createNestedArray("scales");
@@ -47,6 +53,12 @@ void setupHTTP(Scheduler &userScheduler){
     );
 }
 
+/**
+ * @brief Add all settings from JsonObject to buffer of objects to be uploaded
+ * to server in http request
+ * 
+ * @param scaleSettings Object containing id of node and rest of settings to update
+ */
 void addUpdatedSettings(JsonObject scaleSettings){
     for(int i = 0; i < settingsUpdates.size(); i++){
         if(settingsUpdates.getElement(i).containsKey("id") && scaleSettings.containsKey("id") && settingsUpdates.getElement(i)["id"] == scaleSettings["id"]){
@@ -78,6 +90,11 @@ void addUpdatedSettings(JsonObject scaleSettings){
     settingsUpdates.add(scaleSettings); // stores by copy
 }
 
+/**
+ * @brief Task function that will run every x seconds and make all wifi requests.
+ * 
+ * @param args all args passed to function (none in this case)
+ */
 void uploadSettings(void* args){
     for(;;){ // infinite loop
         // Delay for 30s (like calling the task every 30s freeing up the core)
@@ -92,6 +109,7 @@ void uploadSettings(void* args){
             Serial.println("Not Connected");
         }
 
+        // Check on right core
         Serial.print("WIFI comms running on core ");
         Serial.print(xPortGetCoreID());
         Serial.print(", Heap free = ");
@@ -101,6 +119,12 @@ void uploadSettings(void* args){
     }
 }
 
+/**
+ * @brief When a node received new settings from server and responded with ack
+ * add id and settings update to buffer to be sent on next http request
+ * 
+ * @param id of the node that ackknowledged the updated settings
+ */
 void addSettingsAckID(uint32_t id){
     for(int i = 0; i < settingsUpdates.size(); i++){
         if(settingsUpdates.getElement(i).containsKey("id") && settingsUpdates.getElement(i)["id"] == id){
@@ -114,6 +138,12 @@ void addSettingsAckID(uint32_t id){
     obj[UPDATE_SETTINGS_SERVER] = false;
 }
 
+/**
+ * @brief Get the Settings To Update from the http server
+ * 
+ * @return true if successful request
+ * @return false if error in request (usually unauthorised)
+ */
 bool getSettingsToUpdate(void){
     if(deviceSettings.jwt != ""){
         http.begin(SERVER_IP + "/core/settings/");
@@ -143,6 +173,12 @@ bool getSettingsToUpdate(void){
     return false;
 }
 
+/**
+ * @brief post the settings in buffer to http server
+ * 
+ * @return true if successful request
+ * @return false if error in request (usually unauthorised)
+ */
 bool updateSettings(void){
     if(settingsUpdates.size() > 0 && deviceSettings.jwt != ""){
         serializeJsonPretty(settingsParent, Serial);
@@ -183,6 +219,12 @@ bool updateSettings(void){
     return false;
 }
 
+/**
+ * @brief Use username and password to get new auth token for making requests
+ * 
+ * @return true if successful request got token
+ * @return false if error in request or invalid username and password
+ */
 bool authorise(void){
     if(deviceSettings.username != "" && deviceSettings.password != ""){
         http.begin(SERVER_IP + "/token-auth/");
@@ -217,6 +259,13 @@ bool authorise(void){
     return false;
 }
 
+/**
+ * @brief Get if the username and password have successfully made a request so user
+ * knows if there is a problem
+ * 
+ * @return true is successful request
+ * @return false if either no request was made yet or requests havn't been successful
+ */
 bool hadSuccessfulLogin(void){
     return hasAuthed;
 }
