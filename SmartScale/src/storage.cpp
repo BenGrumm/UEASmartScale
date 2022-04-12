@@ -5,6 +5,7 @@ Settings deviceSettings;
 
 void setupStorage(void){
     preferences.begin(PREF_NAMESPACE, true);
+    preferences.clear();
 
     // Assign all vars from storage to a struct
     deviceSettings.calibrationVal = preferences.getFloat(SETTINGS_CAL_VALUE, 1);

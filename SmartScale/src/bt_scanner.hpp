@@ -14,4 +14,11 @@ void setupBTScan(Scheduler& userScheduler);
 void foundDevices(BLEScanResults foundDevices);
 void scanDevices(void* args);
 
+struct BeaconInfo {
+    uint8_t major;
+    uint8_t minor;
+
+    double distance;
+};
+
 #endif

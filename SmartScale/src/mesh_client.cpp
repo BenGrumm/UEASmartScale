@@ -126,7 +126,9 @@ void receivedCallback(const uint32_t &from, const String &msg){
     }
     // Root receives this if node successfully received its settings update
     else if(root.containsKey(ACK_RECEIVED_SETTINGS) && mesh.isRoot()){
+        #ifdef ROOT
         addSettingsAckID(from);
+        #endif
     }
 }
 
@@ -150,7 +152,9 @@ void clearSettings(void){
 void ackUpdatedSettings(void){
     if(mesh.isRoot()){
         Serial.println("Is Root Update Ack");
+        #ifdef ROOT
         addSettingsAckID(mesh.getNodeId());
+        #endif
     }else{
         mesh.sendSingle(deviceSettings.bridgeID, "{\"ACK_RECEIVED\":true");
     }
@@ -195,12 +199,12 @@ void sendSettingsToNode(JsonObject settings){
 void sendUpdatedSettings(void){
     if(updatedSettingsObject.size() > 0 && checkIfBridgeExists()){
         Serial.println("Is Settings To Update And Bridge Exists");
-        serializeJsonPretty(updatedSettingsObject, Serial); Serial.println();
+        serializeJsonPretty(updatedSettings, Serial); Serial.println();
         updatedSettingsObject["id"] = mesh.getNodeId();
         
         if(deviceSettings.bridgeID != mesh.getNodeId()){
             String msg;
-            serializeJson(updatedSettingsObject, msg);
+            serializeJson(updatedSettings, msg);
             Serial.println(msg);
         
             Serial.println("Not Bridge So Send to bridge");
