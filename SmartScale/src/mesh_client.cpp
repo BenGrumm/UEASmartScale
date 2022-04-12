@@ -6,7 +6,6 @@ IPAddress myIP(0,0,0,0);
 DynamicJsonDocument updatedSettings(2048);
 #ifdef ROOT
 DynamicJsonDocument sentNodeSettings(1024);
-JsonObject objectToSendSettings;
 #endif
 bool hasUpdatedSinceLastSend = false;
 bool bridgeExists = false;
@@ -44,8 +43,6 @@ void setupMesh(Scheduler &userScheduler){
     mesh.setRoot(true);
     // This node and all other nodes should ideally know the mesh contains a root, so call this on all nodes
     mesh.setContainsRoot(true);
-
-    objectToSendSettings = updatedSettings.createNestedObject(RECIEVED_UPDATED_SETTINGS);
 
     #endif
 
@@ -337,6 +334,29 @@ void addSettingsItemForMeshToSend(String key, double value){
 void addSettingsItemForMeshToSend(String key, unsigned int value){
     updatedSettingsObject[key] = value;
     hasUpdatedSinceLastSend = true;
+}
+
+/**
+ * @brief Add a beacon to the updated settings
+ * 
+ * @param key name of object to create / updated
+ * @param major major value of beacon
+ * @param minor minor value of beacon
+ * @param distance between beacon and device
+ */
+void addBeacon(String key, uint8_t major, uint8_t minor, double distance){
+
+    JsonObject obj;
+
+    if(updatedSettingsObject.containsKey(key)){
+        obj = updatedSettingsObject[key];
+    }else{
+        obj = updatedSettingsObject.createNestedObject(key);
+    }
+
+    obj["major"] = major;
+    obj["minor"] = minor;
+    obj["distance"] = distance;
 }
 
 /**

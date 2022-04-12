@@ -8,6 +8,7 @@
 #include <BLEAdvertisedDevice.h>
 
 #include "painlessMesh.h"
+#include "mesh_client.hpp"
 
 void setupBTScan(Scheduler& userScheduler);
 

@@ -84,6 +84,16 @@ void addSettingsItemForMeshToSend(String key, double value);
 void addSettingsItemForMeshToSend(String key, unsigned int value);
 
 /**
+ * @brief Add a beacon to the updated settings
+ * 
+ * @param key name of object to create / updated
+ * @param major major value of beacon
+ * @param minor minor value of beacon
+ * @param distance between beacon and device
+ */
+void addBeacon(String key, uint8_t major, uint8_t minor, double distance);
+
+/**
  * @brief Send ack to node that the server successfully recevied its settings
  * 
  * @param id of the node to send ack to

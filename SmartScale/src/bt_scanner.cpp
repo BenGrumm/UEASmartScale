@@ -40,7 +40,6 @@ void foundDevices(BLEScanResults foundDevices){
 
     for(int i = 0; i < foundDevices.getCount(); i++){
         BLEAdvertisedDevice device = foundDevices.getDevice(i);
-        double rssi = device.getRSSI();
 
         if(device.haveManufacturerData()){
             char *pHex = BLEUtils::buildHexData(nullptr, (uint8_t*)device.getManufacturerData().data(), device.getManufacturerData().length());
@@ -86,6 +85,13 @@ void foundDevices(BLEScanResults foundDevices){
             "Major: %d, Minor: %d, Distance: %f\n", 
             devices[i].major, devices[i].minor, devices[i].distance
         );
+    }
+
+    if(numFound == 3){
+        Serial.println("Adding Beacons");
+        addBeacon("beaconOne", devices[0].major, devices[0].minor, devices[0].distance);
+        addBeacon("beaconTwo", devices[1].major, devices[1].minor, devices[1].distance);
+        addBeacon("beaconThree", devices[2].major, devices[2].minor, devices[2].distance);
     }
 
     Serial.println("Scan done!");
