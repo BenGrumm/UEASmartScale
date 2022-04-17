@@ -52,7 +52,7 @@ void loop()
  
       Serial1.write("AT+MARJ0x0001");
       delay(100);
-      Serial1.write("AT+MINO0x0003");
+      Serial1.write("AT+MINO0x0004");
       delay(100);
 
       Serial1.write("AT+IBE005DF65F2");

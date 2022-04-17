@@ -26,7 +26,7 @@ void setupMesh(Scheduler &userScheduler){
 
     // Channel set to 6. Make sure to use the same channel for your mesh and for you other
     // network (STATION_SSID)
-    mesh.init("MESH_NETWORK_" + deviceSettings.meshName, "MESH_PASS_" + deviceSettings.meshPassword, &userScheduler, MESH_PORT, WIFI_AP_STA, 6);
+    mesh.init("MESH_" + deviceSettings.meshName, "PASS_" + deviceSettings.meshPassword, &userScheduler, MESH_PORT, WIFI_AP_STA, 9);
     // mesh.init(MESH_PREFIX, MESH_PASSWORD, &userScheduler, MESH_PORT, WIFI_AP_STA, 6);
     mesh.onReceive(&receivedCallback);
 
@@ -36,7 +36,7 @@ void setupMesh(Scheduler &userScheduler){
 
     // To connect to wifi
     // mesh.stationManual(STATION_SSID, STATION_PASSWORD);
-    Serial.println("SSID " + deviceSettings.WIFISSID + ", Password = " + deviceSettings.WIFIPassword);
+    Serial.println("SSID \"" + deviceSettings.WIFISSID + "\", Password = \"" + deviceSettings.WIFIPassword + "\"");
     mesh.stationManual(deviceSettings.WIFISSID, deviceSettings.WIFIPassword);
     mesh.setHostname(HOSTNAME);
     // Bridge node, should (in most cases) be a root node. See [the wiki](https://gitlab.com/painlessMesh/painlessMesh/wikis/Possible-challenges-in-mesh-formation) for some background

@@ -2,22 +2,16 @@
 
 int scanTime = 2; //In seconds
 BLEScan* pBLEScan;
-
-class MyAdvertisedDeviceCallbacks: public BLEAdvertisedDeviceCallbacks {
-    void onResult(BLEAdvertisedDevice advertisedDevice) {
-        // https://medium.com/beingcoders/convert-rssi-value-of-the-ble-bluetooth-low-energy-beacons-to-meters-63259f307283#:~:text=Distance%20%3D%2010%20%5E%20((Measured%20Power,RSSI)%2F(10%20*%20N))
-        // Measure power of -67 dBm at 1m, 3.5 calculate by finding best fit for rssi measure at 3m
-        double distance = pow(10, ((-67-(advertisedDevice.getRSSI()))/(10 * 3.5)));
-        Serial.printf("Advertised Device: %s, RSSI = %d, Distance = %f\n", advertisedDevice.toString().c_str(), advertisedDevice.getRSSI(), distance);
-    }
-};
+BeaconInfo devices[4];
+uint8_t numFound = 0;
+uint8_t numScans = 0;
 
 void setupBTScan(Scheduler& userScheduler){
     BLEDevice::init("");
     pBLEScan = BLEDevice::getScan(); //create new scan
     pBLEScan->setActiveScan(true); //active scan uses more power, but get results faster
-    pBLEScan->setInterval(500);
-    pBLEScan->setWindow(100);  // less or equal setInterval value
+    pBLEScan->setInterval(2000);
+    pBLEScan->setWindow(250);  // less or equal setInterval value
 
     // pBLEScan->start(scanTime, foundDevices, false);
     xTaskCreatePinnedToCore(
@@ -35,9 +29,6 @@ void foundDevices(BLEScanResults foundDevices){
     Serial.print("Devices found: ");
     Serial.println(foundDevices.getCount());
 
-    int numFound = 0;
-    BeaconInfo devices[3];
-
     for(int i = 0; i < foundDevices.getCount(); i++){
         BLEAdvertisedDevice device = foundDevices.getDevice(i);
 
@@ -49,21 +40,35 @@ void foundDevices(BLEScanResults foundDevices){
             String UUID = realStringData.substring(8, 40);
             if(UUID.equals("05df65f2b5a111ecb9090242ac120002")){
                 String major = realStringData.substring(40, 44);
+                uint8_t intMajor = (uint8_t)strtol(major.c_str(), NULL, 16);
                 String minor = realStringData.substring(44, 48);
+                uint8_t intMinor = (uint8_t)strtol(minor.c_str(), NULL, 16);
                 String signalPower = realStringData.substring(48);
 
                 int8_t sigPow = (int8_t)strtol(signalPower.c_str(), NULL, 16);
+                double distance = pow(10, (sigPow - device.getRSSI()) / (10 * 3.5));
 
-                if(numFound <= 2){
-                    devices[numFound].major = (uint8_t)strtol(major.c_str(), NULL, 16);
-                    devices[numFound].minor = (uint8_t)strtol(minor.c_str(), NULL, 16);
-                    devices[numFound++].distance = pow(10, (sigPow - device.getRSSI()) / (10 * 3.5));
-                }else{
+                bool existsAndUpdated = false;
+
+                for(int i = 0; i < numFound; i++){
+                    if(devices[i].major == intMajor && devices[i].minor == intMinor){
+                        devices[i].distance = (devices[i].distance + distance) / 2.0;
+                        existsAndUpdated = true;
+                        break;
+                    }
+                }
+
+                if(!existsAndUpdated && numFound <= 3){
+                    devices[numFound].major = intMajor;
+                    devices[numFound].minor = intMinor;
+                    devices[numFound++].distance = distance;
+                }else if(!existsAndUpdated){
                     int smallestPos = -1;
-                    double deviceVal = pow(10, (sigPow - device.getRSSI()) / (10 * 3.5));
+                    double deviceVal = distance;
                     double largestDistance = deviceVal;
 
                     for(int i = 0; i < numFound; i++){
+
                         if(devices[i].distance > largestDistance){
                             smallestPos = i;
                             largestDistance = devices[i].distance;
@@ -87,11 +92,14 @@ void foundDevices(BLEScanResults foundDevices){
         );
     }
 
-    if(numFound == 3){
+    if(numScans++ >= 5 && numFound == 4){
         Serial.println("Adding Beacons");
         addBeacon("beaconOne", devices[0].major, devices[0].minor, devices[0].distance);
         addBeacon("beaconTwo", devices[1].major, devices[1].minor, devices[1].distance);
         addBeacon("beaconThree", devices[2].major, devices[2].minor, devices[2].distance);
+        addBeacon("beaconFour", devices[3].major, devices[3].minor, devices[3].distance);
+        numScans = 0;
+        numFound = 0;
     }
 
     Serial.println("Scan done!");
