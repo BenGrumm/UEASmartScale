@@ -1,46 +1,37 @@
 #include "storage.hpp"
 
-Preferences preferences;
-Settings deviceSettings;
+DeviceSettings::DeviceSettings(){
+    Serial.println("Create Instance");
 
-void setupStorage(void){
     preferences.begin(PREF_NAMESPACE, true);
-    preferences.clear();
+    // preferences.clear();
 
-    // Assign all vars from storage to a struct
-    deviceSettings.calibrationVal = preferences.getFloat(SETTINGS_CAL_VALUE, 1);
-    deviceSettings.numItemsPerWeight = preferences.getUInt(SETTINGS_NUM_VALUES_PER, 1);
-    deviceSettings.referenceWeight = preferences.getDouble(SETTINGS_WEIGHT_REFERENCE, 10);
-    deviceSettings.zeroFactor = preferences.getLong(SETTINGS_ZERO_FACTOR, 0);
+    calibrationVal = preferences.getFloat(SETTINGS_CAL_VALUE, 1);
+    numItemsPerWeight = preferences.getUInt(SETTINGS_NUM_VALUES_PER, 1);
+    referenceWeight = preferences.getDouble(SETTINGS_WEIGHT_REFERENCE, 10);
+    zeroFactor = preferences.getLong(SETTINGS_ZERO_FACTOR, 0);
 
-    deviceSettings.username = preferences.getString(SETTINGS_SERVER_USERNAME, "Ben12");
-    deviceSettings.password = preferences.getString(SETTINGS_SERVER_PASSWORD, "test");
-    deviceSettings.jwt = preferences.getString(SETTINGS_JWT, "");
+    username = preferences.getString(SETTINGS_SERVER_USERNAME, "Ben12");
+    password = preferences.getString(SETTINGS_SERVER_PASSWORD, "test");
+    jwt = preferences.getString(SETTINGS_JWT, "");
 
-    deviceSettings.WIFISSID = preferences.getString(SETTINGS_WIFI_SSID, "");
-    deviceSettings.WIFIPassword = preferences.getString(SETTINGS_WIFI_PASSWORD, "");
+    WIFISSID = preferences.getString(SETTINGS_WIFI_SSID, "");
+    WIFIPassword = preferences.getString(SETTINGS_WIFI_PASSWORD, "");
 
-    deviceSettings.meshName = preferences.getString(SETTINGS_MESH_NAME, "SCALE");
-    deviceSettings.meshPassword = preferences.getString(SETTINGS_MESH_PASSWORD, "12345");
+    meshName = preferences.getString(SETTINGS_MESH_NAME, "SCALE");
+    meshPassword = preferences.getString(SETTINGS_MESH_PASSWORD, "12345");
 
-    deviceSettings.initialisation = preferences.getBool(INITIALISATION, true);
+    initialisation = preferences.getBool(INITIALISATION, true);
 
     preferences.end();
-
-    // If debug needed
-    // Serial.println("Settings");
-    // Serial.print("Cal Val ");Serial.println(deviceSettings.calibrationVal);
-    // Serial.print("Num Items Per ");Serial.println(deviceSettings.numItemsPerWeight);
-    // Serial.print("Ref Weight ");Serial.println(deviceSettings.referenceWeight);
-    // Serial.print("Zero ");Serial.println(deviceSettings.zeroFactor);
 }
 
-void updateLocalSettings(JsonObject newSettings){
-    if(newSettings.containsKey(WEIGHT_PER_X_KEY) && newSettings[WEIGHT_PER_X_KEY] != deviceSettings.referenceWeight){
+void DeviceSettings::updateLocalSettings(JsonObject newSettings){
+    if(newSettings.containsKey(WEIGHT_PER_X_KEY) && newSettings[WEIGHT_PER_X_KEY] != referenceWeight){
         setReferenceWeightOfItems(newSettings[WEIGHT_PER_X_KEY], false);
     }
 
-    if(newSettings.containsKey(NUM_ITEMS_PER_WEIGHT_KEY) && newSettings[NUM_ITEMS_PER_WEIGHT_KEY] != deviceSettings.numItemsPerWeight){
+    if(newSettings.containsKey(NUM_ITEMS_PER_WEIGHT_KEY) && newSettings[NUM_ITEMS_PER_WEIGHT_KEY] != numItemsPerWeight){
         setNumItemsPerWeightVal(newSettings[NUM_ITEMS_PER_WEIGHT_KEY], false);
     }
 
@@ -54,17 +45,17 @@ void updateLocalSettings(JsonObject newSettings){
     // }
 }
 
-void setBridgeID(uint32_t id){
+void DeviceSettings::setBridgeID(uint32_t id){
     // Open namespace for read and write
     preferences.begin(PREF_NAMESPACE, false);
 
-    deviceSettings.bridgeID = id;
+    bridgeID = id;
     preferences.putUInt(SETTINGS_BRIDGE_ID, id);
 
     preferences.end();
 }
 
-uint32_t getBridgeIDMem(void){
+uint32_t DeviceSettings::getBridgeIDMem(void){
     // Open namespace for read
     preferences.begin(PREF_NAMESPACE, true);
 
@@ -75,17 +66,18 @@ uint32_t getBridgeIDMem(void){
     return val;
 }
 
-void setSSID(String SSID){
+void DeviceSettings::setSSID(String SSID){
     // Open namespace for read and write
     preferences.begin(PREF_NAMESPACE, false);
 
-    deviceSettings.WIFISSID = SSID;
+    WIFISSID = SSID;
+    Serial.println("Set SSID = " + SSID);
     preferences.putString(SETTINGS_WIFI_SSID, SSID);
 
     preferences.end();
 }
 
-String getSSIDMem(void){
+String DeviceSettings::getSSIDMem(void){
     // Open namespace for read
     preferences.begin(PREF_NAMESPACE, true);
 
@@ -96,17 +88,17 @@ String getSSIDMem(void){
     return val;
 }
 
-void setWIFIPassword(String password){
+void DeviceSettings::setWIFIPassword(String password){
     // Open namespace for read and write
     preferences.begin(PREF_NAMESPACE, false);
 
-    deviceSettings.WIFIPassword = password;
+    WIFIPassword = password;
     preferences.putString(SETTINGS_WIFI_PASSWORD, password);
 
     preferences.end();
 }
 
-String getWIFIPasswordMem(void){
+String DeviceSettings::getWIFIPasswordMem(void){
     // Open namespace for read
     preferences.begin(PREF_NAMESPACE, true);
 
@@ -117,17 +109,17 @@ String getWIFIPasswordMem(void){
     return val;
 }
 
-void setUsername(String username){
+void DeviceSettings::setUsername(String username){
     // Open namespace for read and write
     preferences.begin(PREF_NAMESPACE, false);
 
-    deviceSettings.username = username;
+    username = username;
     preferences.putString(SETTINGS_SERVER_USERNAME, username);
 
     preferences.end();
 }
 
-String getUsernameMem(void){
+String DeviceSettings::getUsernameMem(void){
     // Open namespace for read
     preferences.begin(PREF_NAMESPACE, true);
 
@@ -138,17 +130,17 @@ String getUsernameMem(void){
     return val;
 }
 
-void setPassword(String password){
+void DeviceSettings::setPassword(String password){
     // Open namespace for read and write
     preferences.begin(PREF_NAMESPACE, false);
 
-    deviceSettings.password = password;
+    password = password;
     preferences.putString(SETTINGS_SERVER_PASSWORD, password);
 
     preferences.end();
 }
 
-String getPasswordMem(void){
+String DeviceSettings::getPasswordMem(void){
     // Open namespace for read
     preferences.begin(PREF_NAMESPACE, true);
 
@@ -159,17 +151,17 @@ String getPasswordMem(void){
     return val;
 }
 
-void setJWT(String jwt){
+void DeviceSettings::setJWT(String jwt){
     // Open namespace for read and write
     preferences.begin(PREF_NAMESPACE, false);
 
-    deviceSettings.jwt = jwt;
+    this->jwt = jwt;
     preferences.putString(SETTINGS_JWT, jwt);
 
     preferences.end();
 }
 
-String getJWTMem(void){
+String DeviceSettings::getJWTMem(void){
     // Open namespace for read
     preferences.begin(PREF_NAMESPACE, true);
 
@@ -180,17 +172,17 @@ String getJWTMem(void){
     return val;
 }
 
-void setCalibrationVal(float calVal){
+void DeviceSettings::setCalibrationVal(float calVal){
     // Open namespace for read and write
     preferences.begin(PREF_NAMESPACE, false);
 
-    deviceSettings.calibrationVal = calVal;
+    calibrationVal = calVal;
     preferences.putFloat(SETTINGS_CAL_VALUE, calVal);
 
     preferences.end();
 }
 
-float getCalibrationValMem(void){
+float DeviceSettings::getCalibrationValMem(void){
     // Open namespace for read
     preferences.begin(PREF_NAMESPACE, true);
 
@@ -201,17 +193,17 @@ float getCalibrationValMem(void){
     return val;
 }
 
-void setZeroFactor(long zeroFactor){
+void DeviceSettings::setZeroFactor(long zeroFactor){
     // Open namespace for read and write
     preferences.begin(PREF_NAMESPACE, false);
 
-    deviceSettings.zeroFactor = zeroFactor;
+    this->zeroFactor = zeroFactor;
     preferences.putLong(SETTINGS_ZERO_FACTOR, zeroFactor);
 
     preferences.end();
 }
 
-long getZeroFactorMem(void){
+long DeviceSettings::getZeroFactorMem(void){
     // Open namespace for read
     preferences.begin(PREF_NAMESPACE, true);
 
@@ -222,11 +214,11 @@ long getZeroFactorMem(void){
     return val;
 }
 
-void setNumItemsPerWeightVal(unsigned int numItems, bool updateServer){
+void DeviceSettings::setNumItemsPerWeightVal(unsigned int numItems, bool updateServer){
     // Open namespace for read and write
     preferences.begin(PREF_NAMESPACE, false);
 
-    deviceSettings.numItemsPerWeight = numItems;
+    numItemsPerWeight = numItems;
     preferences.putUInt(SETTINGS_NUM_VALUES_PER, numItems);
 
     if(updateServer){
@@ -236,7 +228,7 @@ void setNumItemsPerWeightVal(unsigned int numItems, bool updateServer){
     preferences.end();
 }
 
-unsigned int getNumItemsPerWeightValMem(void){
+unsigned int DeviceSettings::getNumItemsPerWeightValMem(void){
     // Open namespace for read
     preferences.begin(PREF_NAMESPACE, true);
 
@@ -247,11 +239,11 @@ unsigned int getNumItemsPerWeightValMem(void){
     return val;
 }
 
-void setReferenceWeightOfItems(double itemsWeightGrams, bool updateServer){
+void DeviceSettings::setReferenceWeightOfItems(double itemsWeightGrams, bool updateServer){
     // Open namespace for read and write
     preferences.begin(PREF_NAMESPACE, false);
 
-    deviceSettings.referenceWeight = itemsWeightGrams;
+    referenceWeight = itemsWeightGrams;
     preferences.putDouble(SETTINGS_WEIGHT_REFERENCE, itemsWeightGrams);
 
     if(updateServer){
@@ -261,7 +253,7 @@ void setReferenceWeightOfItems(double itemsWeightGrams, bool updateServer){
     preferences.end();
 }
 
-double getReferenceWeightOfItemsGramsMem(void){
+double DeviceSettings::getReferenceWeightOfItemsGramsMem(void){
     // Open namespace for read and write
     preferences.begin(PREF_NAMESPACE, true);
 
@@ -272,7 +264,7 @@ double getReferenceWeightOfItemsGramsMem(void){
     return val;
 }
 
-void saveWeight(double weight){
+void DeviceSettings::saveWeight(double weight){
     // Open namespace for read and write
     preferences.begin(PREF_NAMESPACE, false);
 
@@ -281,7 +273,7 @@ void saveWeight(double weight){
     preferences.end();
 }
 
-double getWeightMem(void){
+double DeviceSettings::getWeightMem(void){
     // Open namespace for read only
     preferences.begin(PREF_NAMESPACE, true);
 
@@ -292,7 +284,7 @@ double getWeightMem(void){
     return val;
 }
 
-void saveMeshName(String name){
+void DeviceSettings::saveMeshName(String name){
     // Open namespace for read and write
     preferences.begin(PREF_NAMESPACE, false);
 
@@ -301,7 +293,7 @@ void saveMeshName(String name){
     preferences.end();
 }
 
-String getMeshName(void){
+String DeviceSettings::getMeshName(void){
     // Open namespace for read only
     preferences.begin(PREF_NAMESPACE, true);
 
@@ -312,7 +304,7 @@ String getMeshName(void){
     return val;
 }
 
-void saveMeshPassword(String password){
+void DeviceSettings::saveMeshPassword(String password){
     // Open namespace for read and write
     preferences.begin(PREF_NAMESPACE, false);
 
@@ -321,7 +313,7 @@ void saveMeshPassword(String password){
     preferences.end();
 }
 
-String getMeshPassword(void){
+String DeviceSettings::getMeshPassword(void){
     // Open namespace for read only
     preferences.begin(PREF_NAMESPACE, true);
 

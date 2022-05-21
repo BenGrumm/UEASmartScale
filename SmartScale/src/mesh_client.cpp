@@ -2,6 +2,7 @@
 
 painlessMesh  mesh;
 IPAddress myIP(0,0,0,0);
+DeviceSettings* local_mesh_settings;
 
 DynamicJsonDocument updatedSettings(2048);
 #ifdef ROOT
@@ -22,11 +23,13 @@ unsigned int lastNumItemsSent = 941; // Random initializer as value likely to be
  * @param userScheduler the scheduler that the mesh will update on every loop
  */
 void setupMesh(Scheduler &userScheduler){
+    local_mesh_settings = DeviceSettings::getInstance();
+
     mesh.setDebugMsgTypes( ERROR | STARTUP | CONNECTION );  // set before init() so that you can see startup messages
 
     // Channel set to 6. Make sure to use the same channel for your mesh and for you other
     // network (STATION_SSID)
-    mesh.init("MESH_" + deviceSettings.meshName, "PASS_" + deviceSettings.meshPassword, &userScheduler, MESH_PORT, WIFI_AP_STA, 9);
+    mesh.init("MESH_" + local_mesh_settings->meshName, "PASS_" + local_mesh_settings->meshPassword, &userScheduler, MESH_PORT, WIFI_AP_STA, 9);
     // mesh.init(MESH_PREFIX, MESH_PASSWORD, &userScheduler, MESH_PORT, WIFI_AP_STA, 6);
     mesh.onReceive(&receivedCallback);
 
@@ -36,8 +39,8 @@ void setupMesh(Scheduler &userScheduler){
 
     // To connect to wifi
     // mesh.stationManual(STATION_SSID, STATION_PASSWORD);
-    Serial.println("SSID \"" + deviceSettings.WIFISSID + "\", Password = \"" + deviceSettings.WIFIPassword + "\"");
-    mesh.stationManual(deviceSettings.WIFISSID, deviceSettings.WIFIPassword);
+    Serial.println("SSID \"" + local_mesh_settings->WIFISSID + "\", Password = \"" + local_mesh_settings->WIFIPassword + "\"");
+    mesh.stationManual(local_mesh_settings->WIFISSID, local_mesh_settings->WIFIPassword);
     mesh.setHostname(HOSTNAME);
     // Bridge node, should (in most cases) be a root node. See [the wiki](https://gitlab.com/painlessMesh/painlessMesh/wikis/Possible-challenges-in-mesh-formation) for some background
     mesh.setRoot(true);
@@ -49,9 +52,9 @@ void setupMesh(Scheduler &userScheduler){
     updatedSettingsObject = updatedSettings.createNestedObject(UPDATE_SETTINGS);
 
     // If first startup send initial settings
-    if(deviceSettings.initialisation){
-        addSettingsItemForMeshToSend(NUM_ITEMS_PER_WEIGHT_KEY, deviceSettings.numItemsPerWeight);
-        addSettingsItemForMeshToSend(WEIGHT_PER_X_KEY, deviceSettings.referenceWeight);
+    if(local_mesh_settings->initialisation){
+        addSettingsItemForMeshToSend(NUM_ITEMS_PER_WEIGHT_KEY, local_mesh_settings->numItemsPerWeight);
+        addSettingsItemForMeshToSend(WEIGHT_PER_X_KEY, local_mesh_settings->referenceWeight);
         // TODO Set initialisation to false
     }
 
@@ -106,14 +109,14 @@ void receivedCallback(const uint32_t &from, const String &msg){
     // Received a message from bridge on network with its id
     else if(root.containsKey(BRIDGE_KNOWN)){
         // Recieved the id of bridge on the current network
-        if(deviceSettings.bridgeID != root[BRIDGE_KNOWN]){
-            setBridgeID(root[BRIDGE_KNOWN]);
+        if(local_mesh_settings->bridgeID != root[BRIDGE_KNOWN]){
+            local_mesh_settings->setBridgeID(root[BRIDGE_KNOWN]);
         }
     }
     // Received a message giving updated settings
     else if(root.containsKey(RECIEVED_UPDATED_SETTINGS)){
         // TODO Read update settings locally
-        updateLocalSettings(root[RECIEVED_UPDATED_SETTINGS]);
+        local_mesh_settings->updateLocalSettings(root[RECIEVED_UPDATED_SETTINGS]);
         // Return ack
         ackUpdatedSettings();
     }
@@ -153,38 +156,38 @@ void ackUpdatedSettings(void){
         addSettingsAckID(mesh.getNodeId());
         #endif
     }else{
-        mesh.sendSingle(deviceSettings.bridgeID, "{\"ACK_RECEIVED\":true");
+        mesh.sendSingle(local_mesh_settings->bridgeID, "{\"ACK_RECEIVED\":true");
     }
 }
 
 /**
  * @brief Send updated settings received from server to node
  * 
- * @param settings json object (must have "id" value)
+ * @param jsonSettings json object (must have "id" value)
  */
-void sendSettingsToNode(JsonObject settings){
+void sendSettingsToNode(JsonObject jsonSettings){
     Serial.print("Sending updated settings to node ");
-    Serial.println((uint32_t)settings["id"]);
+    Serial.println((uint32_t)jsonSettings["id"]);
 
     #ifdef ROOT
 
-    if(((uint32_t)settings["id"]) == mesh.getNodeId()){
+    if(((uint32_t)jsonSettings["id"]) == mesh.getNodeId()){
         Serial.println("ID is me :)");
-        updateLocalSettings(settings);
+        local_mesh_settings->updateLocalSettings(jsonSettings);
         ackUpdatedSettings();
         return;
     }
 
     sentNodeSettings.clear();
     JsonObject obj = sentNodeSettings.createNestedObject(RECIEVED_UPDATED_SETTINGS);
-    obj.set(settings);
+    obj.set(jsonSettings);
 
     String msg;
 
     serializeJson(sentNodeSettings, msg);
     Serial.println(msg);
 
-    mesh.sendSingle((uint32_t)settings["id"], msg);
+    mesh.sendSingle((uint32_t)jsonSettings["id"], msg);
 
     #endif
 }
@@ -199,13 +202,13 @@ void sendUpdatedSettings(void){
         serializeJsonPretty(updatedSettings, Serial); Serial.println();
         updatedSettingsObject["id"] = mesh.getNodeId();
         
-        if(deviceSettings.bridgeID != mesh.getNodeId()){
+        if(local_mesh_settings->bridgeID != mesh.getNodeId()){
             String msg;
             serializeJson(updatedSettings, msg);
             Serial.println(msg);
         
             Serial.println("Not Bridge So Send to bridge");
-            mesh.sendSingle(deviceSettings.bridgeID, msg);
+            mesh.sendSingle(local_mesh_settings->bridgeID, msg);
         }
         #ifdef ROOT
         else{
@@ -238,10 +241,10 @@ void rootSendUpdateAck(uint32_t id){
  * @return false if bridge not found
  */
 bool checkIfBridgeExists(void){
-    if(deviceSettings.bridgeID != 0){
-        if(checkIfNodeInNetwork(deviceSettings.bridgeID)){
+    if(local_mesh_settings->bridgeID != 0){
+        if(checkIfNodeInNetwork(local_mesh_settings->bridgeID)){
             Serial.print("Checked And Found Bridge ID In List - ");
-            Serial.println(deviceSettings.bridgeID);
+            Serial.println(local_mesh_settings->bridgeID);
             bridgeExists = true;
             return true;
         }

@@ -3,6 +3,8 @@
 HX711 scale;
 unsigned int userKnowWeight = 1000; // Known weight in grams
 
+DeviceSettings* local_loadcell_settings;
+
 Task checkAndUpdateScaleNum(TASK_SECOND * 15, TASK_FOREVER, &checkNumItemsAndUpdate);
 
 /**
@@ -13,11 +15,13 @@ Task checkAndUpdateScaleNum(TASK_SECOND * 15, TASK_FOREVER, &checkNumItemsAndUpd
  * @param clkPin pin to use for clock to HX711
  */
 void setupLC(Scheduler &userScheduler, unsigned int dataPin, unsigned int clkPin){
+    local_loadcell_settings = DeviceSettings::getInstance();
+
     scale.begin(dataPin, clkPin);
 
     // Retrieve stored vals (if any)
-    long zeroFac = deviceSettings.zeroFactor;
-    float calVal = deviceSettings.calibrationVal;
+    long zeroFac = local_loadcell_settings->zeroFactor;
+    float calVal = local_loadcell_settings->calibrationVal;
 
     Serial.print("Zero Factor = ");
     Serial.println(zeroFac);
@@ -41,7 +45,7 @@ void zeroTare(void){
     Serial.println("Zero");
     long avg = scale.read_average();
 
-    setZeroFactor(avg);
+    local_loadcell_settings->setZeroFactor(avg);
 
     scale.set_offset(avg);
 }
@@ -60,7 +64,7 @@ double getWeightGrams(void){
  * 
  */
 void readScale(void){
-    saveWeight(scale.get_units());
+    local_loadcell_settings->saveWeight(scale.get_units());
 }
 
 /**
@@ -74,7 +78,7 @@ void calibrateScale(void){
     double calibrationFactor = scale.get_units(10) / userKnowWeight;
     scale.set_scale(calibrationFactor);
 
-    setCalibrationVal(calibrationFactor);
+    local_loadcell_settings->setCalibrationVal(calibrationFactor);
 }
 
 /**
@@ -92,8 +96,8 @@ void setKnownWeight(unsigned int knownVal){
  * @return unsigned int number of items on the scale
  */
 double getNumItems(void){
-    double ref = deviceSettings.referenceWeight;
-    unsigned int numItems = deviceSettings.numItemsPerWeight;
+    double ref = local_loadcell_settings->referenceWeight;
+    unsigned int numItems = local_loadcell_settings->numItemsPerWeight;
     return round(getWeightGrams() / (ref / numItems));
 }
 

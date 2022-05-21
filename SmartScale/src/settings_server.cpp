@@ -3,6 +3,8 @@
 AsyncWebServer server(AP_SERVER_PORT);
 IPAddress myAPIP(0,0,0,0);
 
+DeviceSettings* settings;
+
 char* html = "\
 <form>\
 	<p>WI-FI</p>\
@@ -25,6 +27,7 @@ char* html = "\
  * @param meshAPIP ip of the mesh
  */
 void setupServer(IPAddress meshAPIP){
+    settings = DeviceSettings::getInstance();
 
     myAPIP = meshAPIP;
     Serial.println("My AP IP is " + myAPIP.toString());
@@ -40,8 +43,8 @@ void setupServer(IPAddress meshAPIP){
             if(ssid != "" && pass != ""){
                 Serial.println("SSID = " + ssid + " - Password = " + pass);
                 // Save
-                setSSID(ssid);
-                setWIFIPassword(pass);
+                settings->setSSID(ssid);
+                settings->setWIFIPassword(pass);
 
                 shouldRestart = true;
             }
@@ -53,8 +56,8 @@ void setupServer(IPAddress meshAPIP){
             if(username != "" && pass != ""){
                 Serial.println("User = " + username + " - Password = " + pass);
                 // Save
-                setUsername(username);
-                setPassword(pass);
+                settings->setUsername(username);
+                settings->setPassword(pass);
                 
                 shouldRestart = true;
             }

@@ -9,6 +9,8 @@ JsonArray settingsUpdates;
 
 HTTPClient http;
 
+DeviceSettings* http_local_settings;
+
 bool hasAuthed = false;
 
 // Task tryAuth(TASK_SECOND * 10, TASK_FOREVER, &tryConnect);
@@ -20,6 +22,9 @@ bool hasAuthed = false;
  * @param userScheduler * was switched to rtos function so no longer needed
  */
 void setupHTTP(Scheduler &userScheduler){
+
+    http_local_settings = DeviceSettings::getInstance();
+
     settingsParent = outgoingSettings.createNestedObject();
     settingsUpdates = settingsParent.createNestedArray("scales");
     
@@ -145,9 +150,9 @@ void addSettingsAckID(uint32_t id){
  * @return false if error in request (usually unauthorised)
  */
 bool getSettingsToUpdate(void){
-    if(deviceSettings.jwt != ""){
+    if(http_local_settings->jwt != ""){
         http.begin(SERVER_IP + "/core/settings/");
-        http.addHeader("Authorization", "JWT " + deviceSettings.jwt);
+        http.addHeader("Authorization", "JWT " + http_local_settings->jwt);
         http.addHeader("Content-Type", "application/json");
 
         int result = http.GET();
@@ -180,12 +185,12 @@ bool getSettingsToUpdate(void){
  * @return false if error in request (usually unauthorised)
  */
 bool updateSettings(void){
-    if(settingsUpdates.size() > 0 && deviceSettings.jwt != ""){
+    if(settingsUpdates.size() > 0 && http_local_settings->jwt != ""){
         serializeJsonPretty(settingsParent, Serial);
         Serial.println();
 
         http.begin(SERVER_IP + "/core/settings/");
-        http.addHeader("Authorization", "JWT " + deviceSettings.jwt);
+        http.addHeader("Authorization", "JWT " + http_local_settings->jwt);
         http.addHeader("Content-Type", "application/json");
 
         String output;
@@ -212,7 +217,7 @@ bool updateSettings(void){
         }else if(result == HTTP_CODE_UNAUTHORIZED){
             authorise();
         }
-    }else if(deviceSettings.jwt == ""){
+    }else if(http_local_settings->jwt == ""){
         authorise();
     }
 
@@ -226,15 +231,15 @@ bool updateSettings(void){
  * @return false if error in request or invalid username and password
  */
 bool authorise(void){
-    if(deviceSettings.username != "" && deviceSettings.password != ""){
+    if(http_local_settings->username != "" && http_local_settings->password != ""){
         http.begin(SERVER_IP + "/token-auth/");
 
         // http.addHeader("Authorization", "JWT ");
         http.addHeader("Content-Type", "application/json");
 
         returnDoc.clear();
-        returnDoc["username"] = deviceSettings.username;
-        returnDoc["password"] = deviceSettings.password;
+        returnDoc["username"] = http_local_settings->username;
+        returnDoc["password"] = http_local_settings->password;
 
         String output;
         serializeJson(returnDoc, output);
@@ -249,7 +254,7 @@ bool authorise(void){
                 String token = obj["token"];
                 Serial.print("Got JWT From Auth - ");
                 Serial.println(token);
-                setJWT(token);
+                http_local_settings->setJWT(token);
                 hasAuthed = true;
                 return true;
             }

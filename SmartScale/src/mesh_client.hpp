@@ -10,7 +10,6 @@
 #include <WiFi.h>
 #include <HTTPClient.h>
 #include <ArduinoJson.h>
-#include "storage.hpp"
 
 #ifdef ROOT
 #include "http_requests.hpp"

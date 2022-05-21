@@ -1,5 +1,7 @@
 #include "ui.hpp"
 
+DeviceSettings* local_ui_settings;
+
 // vars for debouncing
 unsigned long button1LastPress = 0;
 unsigned long button2LastPress = 0;
@@ -62,6 +64,8 @@ LiquidCrystal_I2C lcd(0x27,20,4);  // set the LCD address to 0x27 for a 16 chars
  * See header file for more
  */
 void setupUI(Scheduler &userScheduler, int button1Pin, int button2Pin, int button3Pin){
+    local_ui_settings = DeviceSettings::getInstance();
+
     lcd.init();                      // initialize the lcd 
     lcd.backlight();
 
@@ -466,7 +470,7 @@ void drawWeightSet(void){
     switch(weightSetState){
         case(WEIGHT_SET_CURRENT):
             if(isFirstDraw){
-                double currentStored = deviceSettings.referenceWeight;
+                double currentStored = local_ui_settings->referenceWeight;
                 // double currentStored = 10000000000000;
                 int len = (int)log10(currentStored) + 1;
                 if(len > 6 && len < 17){
@@ -825,8 +829,8 @@ void IRAM_ATTR twoMenuPressed(void){
             break;
         case(MENU_SETTINGS_UPDATE_NAME_PASS):
             menuState = MENU_SETTINGS_UPDATE_NAME_PASS_CONFIRM;
-            meshName = deviceSettings.meshName;
-            meshPassword = deviceSettings.meshPassword;
+            meshName = local_ui_settings->meshName;
+            meshPassword = local_ui_settings->meshPassword;
             drawUI.forceNextIteration();
             break;
         case(MENU_SETTINGS_UPDATE_NAME_PASS_CONFIRM):
@@ -918,15 +922,15 @@ void IRAM_ATTR twoMenuMeshInfoUpdate(void){
                 updateCursorPos = 0;
                 lcd.blink_off();
                 lcd.cursor_off();
-                Serial.println("Before = " + deviceSettings.meshName + ", " + deviceSettings.meshPassword + " - After = " + meshName + ", " + meshPassword);
+                Serial.println("Before = " + local_ui_settings->meshName + ", " + local_ui_settings->meshPassword + " - After = " + meshName + ", " + meshPassword);
                 bool restart = false;
-                if(deviceSettings.meshName != meshName){
-                    saveMeshName(meshName);
+                if(local_ui_settings->meshName != meshName){
+                    local_ui_settings->saveMeshName(meshName);
                     restart = true;
                 }
 
-                if(deviceSettings.meshPassword != meshPassword){
-                    saveMeshPassword(meshPassword);
+                if(local_ui_settings->meshPassword != meshPassword){
+                    local_ui_settings->saveMeshPassword(meshPassword);
                     restart = true;
                 }
 
@@ -1123,7 +1127,7 @@ void IRAM_ATTR oneMenuMeshInfoUpdate(void){
  * 
  */
 void getLocalNumItemsPerWeightVal(void){
-    numItemsSet = deviceSettings.numItemsPerWeight;
+    numItemsSet = local_ui_settings->numItemsPerWeight;
 }
 
 /**
@@ -1131,7 +1135,7 @@ void getLocalNumItemsPerWeightVal(void){
  * 
  */
 void setStorageNumItemsPerWeightVal(void){
-    setNumItemsPerWeightVal(numItemsSet, true);
+    local_ui_settings->setNumItemsPerWeightVal(numItemsSet, true);
 }
 
 /**
@@ -1139,6 +1143,6 @@ void setStorageNumItemsPerWeightVal(void){
  * 
  */
 void saveReferenceWeightToStorage(void){
-    setReferenceWeightOfItems(getWeightGrams(), true);
+    local_ui_settings->setReferenceWeightOfItems(getWeightGrams(), true);
 }
 

@@ -28,7 +28,8 @@ Scheduler userScheduler;
 void setup(){
   Serial.begin(9600);
 
-  setupStorage(); // Do storage first as settings used elsewhere
+  // Serial.println("Getting Settings");
+  // DeviceSettings* set = DeviceSettings::getInstance();
 
   setupMesh(userScheduler);
   setupLC(userScheduler, DOUT, CLK);

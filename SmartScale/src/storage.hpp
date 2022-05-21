@@ -27,135 +27,64 @@
 
 #define SETTINGS_BRIDGE_ID "BRIDGE_ID"
 
-struct Settings{
-    float calibrationVal;
-    long zeroFactor;
-    unsigned int numItemsPerWeight;
-    double referenceWeight;
+class DeviceSettings{
+    public:
+        static DeviceSettings* getInstance(){
+            static DeviceSettings INSTANCE;
+            // INSTANCE.setup();
+            return &INSTANCE;
+        }
 
-    String username;
-    String password;
-    String jwt;
+        void updateLocalSettings(JsonObject newSettings);
+        void setBridgeID(uint32_t id);
+        void setSSID(String SSID);
+        void setWIFIPassword(String password);
+        void setUsername(String username);
+        void setPassword(String password);
+        void setJWT(String jwt);
+        void setCalibrationVal(float calVal);
+        void setZeroFactor(long zeroFactor);
+        void setNumItemsPerWeightVal(unsigned int numItems, bool updateServer);
+        void setReferenceWeightOfItems(double itemsWeightGrams, bool updateServer);
+        void saveWeight(double weight);
+        void saveMeshName(String name);
+        void saveMeshPassword(String password);
 
-    String WIFISSID;
-    String WIFIPassword;
+        [[nodiscard]] uint32_t getBridgeIDMem(void);
+        [[nodiscard]] String getSSIDMem(void);
+        [[nodiscard]] String getWIFIPasswordMem(void);
+        [[nodiscard]] String getUsernameMem(void);
+        [[nodiscard]] String getPasswordMem(void);
+        [[nodiscard]] String getJWTMem(void);
+        [[nodiscard]] float getCalibrationValMem(void);
+        [[nodiscard]] long getZeroFactorMem(void);
+        [[nodiscard]] unsigned int getNumItemsPerWeightValMem(void);
+        [[nodiscard]] double getReferenceWeightOfItemsGramsMem(void);
+        [[nodiscard]] double getWeightMem(void);
+        [[nodiscard]] String getMeshName(void);
+        [[nodiscard]] String getMeshPassword(void);
 
-    String meshName;
-    String meshPassword;
+        float calibrationVal;
+        long zeroFactor;
+        unsigned int numItemsPerWeight;
+        double referenceWeight;
 
-    uint32_t bridgeID;
-    
-    bool initialisation;
+        String username;
+        String password;
+        String jwt;
+
+        String WIFISSID;
+        String WIFIPassword;
+
+        String meshName;
+        String meshPassword;
+
+        uint32_t bridgeID;
+
+        bool initialisation;
+    private:
+        DeviceSettings();
+        Preferences preferences;
 };
-
-extern Settings deviceSettings;
-
-/**
- * @brief Setup function to initialise existing settings
- * 
- */
-void setupStorage(void);
-
-void updateLocalSettings(JsonObject newSettings);
-
-// Bridge ID
-void setBridgeID(uint32_t id);
-uint32_t getBridgeIDMem(void);
-
-
-
-// WIFI Login
-void setSSID(String SSID);
-String getSSIDMem(void);
-
-void setWIFIPassword(String password);
-String getWIFIPasswordMem(void);
-
-
-
-// Login functions
-void setUsername(String username);
-String getUsernameMem(void);
-
-void setPassword(String password);
-String getPasswordMem(void);
-
-void setJWT(String jwt);
-String getJWTMem(void);
-
-// Mesh login functions
-void saveMeshName(String name);
-String getMeshName(void);
-void saveMeshPassword(String password);
-String getMeshPassword(void);
-
-
-
-// Load cell functions
-
-/**
- * @brief Save the calibration value to storage
- * 
- * @param calVal val to save
- */
-void setCalibrationVal(float calVal);
-/**
- * @brief Get the calibration value
- * 
- * @return float of value stored (if none default = 1)
- */
-float getCalibrationValMem(void);
-
-/**
- * @brief Set the zero factor value
- * 
- * @param zeroFactor zero factor calibration
- */
-void setZeroFactor(long zeroFactor);
-/**
- * @brief Get the zero factor object
- * 
- * @return long zero factor stored (if none default = 0)
- */
-long getZeroFactorMem(void);
-
-/**
- * @brief Set the number of items per weight value
- * 
- * @param numItems num items to be stored
- */
-void setNumItemsPerWeightVal(unsigned int numItems, bool updateServer);
-/**
- * @brief Get the number of items per weight value
- * 
- * @return unsigned int with number item per weight (if none stored default = 1)
- */
-unsigned int getNumItemsPerWeightValMem(void);
-
-/**
- * @brief Set the weight of item(s) used for calculating weight of single item along with NumItemsPerWeight
- * 
- * @param itemsWeightGrams weight of the item or items in grams
- */
-void setReferenceWeightOfItems(double itemsWeightGrams, bool updateServer);
-/**
- * @brief Get the weight of item(s) used for calculating weight of single item along with NumItemsPerWeight
- * 
- * @return double weight of the item(s) in grams (if none default = 10)
- */
-double getReferenceWeightOfItemsGramsMem(void);
-
-/**
- * @brief Save the weight scale to memory
- * 
- * @param weight in grams
- */
-void saveWeight(double weight);
-/**
- * @brief Get the Weight object
- * 
- * @return double of weight (if none stored default = 0)
- */
-double getWeightMem(void);
 
 #endif
