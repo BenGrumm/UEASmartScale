@@ -3,7 +3,7 @@
 HX711 scale;
 unsigned int userKnowWeight = 1000; // Known weight in grams
 
-Task checkAndUpdateScaleNum(TASK_SECOND * 30, TASK_FOREVER, &checkNumItemsAndUpdate);
+Task checkAndUpdateScaleNum(TASK_SECOND * 15, TASK_FOREVER, &checkNumItemsAndUpdate);
 
 /**
  * @brief Setup the communication with HX711 and implement stored settings

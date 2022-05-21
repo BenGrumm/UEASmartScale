@@ -227,7 +227,7 @@ void rootSendUpdateAck(uint32_t id){
     if(id == mesh.getNodeId()){
         clearSettings();
     }else{
-        mesh.sendSingle(id, "{\"SERVER_RECIEVED_SETTINGS\":true}");
+        mesh.sendSingle(id, "{\"ACK_SERVER_RECEIVED\":true}");
     }
 }
 

@@ -24,12 +24,12 @@
 #define HOSTNAME "HTTP_BRIDGE"
 
 // Message types
-#define FIND_BRIDGE "FIND_BRIDGE"                               // When a node is looking for bridge
-#define BRIDGE_KNOWN "BRIDGE_DECLERATION"                       // When the bridge is telling its id
-#define UPDATE_SETTINGS "UPDATE_SETTINGS"                       // When a node is updating it's settings
-#define RECIEVED_UPDATED_SETTINGS "RECIEVED_UPDATED_SETTINGS"   // When a node is recieving settings updates
-#define ACK_RECEIVED_SETTINGS "ACK_RECEIVED"                    // When a node received new settings from server and it responds ack
-#define SERVER_RECIEVED_SETTINGS "SERVER_RECIEVED_SETTINGS"     // When the server acks your updated settings
+#define FIND_BRIDGE "FIND_BRIDGE"                          // When a node is looking for bridge
+#define BRIDGE_KNOWN "BRIDGE_DECLERATION"                  // When the bridge is telling its id
+#define UPDATE_SETTINGS "UPDATE_SERVER_SETTINGS"           // When a node is updating it's settings 
+#define RECIEVED_UPDATED_SETTINGS "UPDATE_NODE_SETTINGS"   // When a node is recieving settings updates
+#define ACK_RECEIVED_SETTINGS "ACK_NODE_RECEIVED"          // When a node received new settings from server and it responds ack
+#define SERVER_RECIEVED_SETTINGS "ACK_SERVER_RECEIVED"     // When the server acks your updated settings
 
 #define NUM_STORED_KEY "numStored"
 #define WEIGHT_PER_X_KEY "weightGramsPerXItmes"

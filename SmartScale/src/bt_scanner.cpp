@@ -45,8 +45,14 @@ void foundDevices(BLEScanResults foundDevices){
                 uint8_t intMinor = (uint8_t)strtol(minor.c_str(), NULL, 16);
                 String signalPower = realStringData.substring(48);
 
-                int8_t sigPow = (int8_t)strtol(signalPower.c_str(), NULL, 16);
-                double distance = pow(10, (sigPow - device.getRSSI()) / (10 * 3.5));
+                // int8_t sigPow = (int8_t)strtol(signalPower.c_str(), NULL, 16);
+                int8_t sigPow = -74;
+                double distance = pow(10, (sigPow - device.getRSSI()) / (10 * 3.1));
+                Serial.println("Scan Values");
+                Serial.printf(
+                    "Major: %, Minor: %d, Distance: %f, RSSI: %d, SigPow: %d\n", 
+                    intMajor, intMinor, distance, device.getRSSI(), sigPow
+                );
 
                 bool existsAndUpdated = false;
 
@@ -85,6 +91,7 @@ void foundDevices(BLEScanResults foundDevices){
         }
     }
 
+    Serial.println("Average:");
     for(int i = 0; i < numFound; i++){
         Serial.printf(
             "Major: %d, Minor: %d, Distance: %f\n", 
