@@ -6,14 +6,47 @@ unsigned long button2LastPress = 0;
 unsigned long button3LastPress = 0;
 unsigned long debounceDelay = 200;
 
+uint8_t button1 = 0;
+uint8_t button2 = 0;
+uint8_t button3 = 0;
+
 unsigned int screenState = HOME; // current lcd state
 unsigned int menuState = MENU_EXIT;
 unsigned int calibrateState = CALIBRATE_ZERO;
 unsigned int weightSetState = WEIGHT_SET_CURRENT;
+unsigned int meshUpdateSetState = UPDATE_MESH_NAME;
 volatile unsigned int numItemsSet = 1; // temp var for the num items in the MENU_NUMBER_SCREEN state
+uint8_t updateCursorPos = 0;
+String meshName = "HELLO";
+String meshPassword = "12345";
 
 bool isFirstDraw = true;
 bool displayGrams = false;
+
+// Custom characters for LCD
+byte Check[] = {
+    B00000,
+    B00001,
+    B00011,
+    B10110,
+    B11100,
+    B01000,
+    B00000,
+    B00000
+};
+
+byte Cross[] = {
+    B00000,
+    B10001,
+    B11011,
+    B01110,
+    B01110,
+    B11011,
+    B10001,
+    B00000
+};
+
+Task checkButton(TASK_SECOND / 500, TASK_FOREVER, &checkButtonStates);
 
 Task drawUI(TASK_SECOND * 1, TASK_FOREVER, &drawScreen);
 Task zeroScale(TASK_IMMEDIATE, TASK_ONCE, &zeroTare);
@@ -32,26 +65,57 @@ void setupUI(Scheduler &userScheduler, int button1Pin, int button2Pin, int butto
     lcd.init();                      // initialize the lcd 
     lcd.backlight();
 
+    lcd.createChar(0, Check);
+    lcd.createChar(1, Cross);
+
     // Use floating pin value as pseudo random seed (used in testing)
     // randomSeed(analogRead(0));
 
+    button1 = button1Pin;
+    button2 = button2Pin;
+    button3 = button3Pin;
+
     // Setup buttons and their interrupts
     pinMode(button1Pin, INPUT_PULLUP);
-    attachInterrupt(digitalPinToInterrupt(button1Pin), buttonPress_one, FALLING);
     pinMode(button2Pin, INPUT_PULLUP);
-    attachInterrupt(digitalPinToInterrupt(button2Pin), buttonPress_two, FALLING);
     pinMode(button3Pin, INPUT_PULLUP);
-    attachInterrupt(digitalPinToInterrupt(button3Pin), buttonPress_three, FALLING);
+
+    // attachInterrupt(digitalPinToInterrupt(button1Pin), buttonPress_one, FALLING);
+    // attachInterrupt(digitalPinToInterrupt(button2Pin), buttonPress_two, FALLING);
+    // attachInterrupt(digitalPinToInterrupt(button3Pin), buttonPress_three, FALLING);
 
     // Setup tasks
+    Serial.println("Add");
     userScheduler.addTask(drawUI);
+    userScheduler.addTask(checkButton);
     drawUI.enable();
+    checkButton.enable();
+    Serial.println("Done");
 
     userScheduler.addTask(zeroScale); // enabled in interrupt
     userScheduler.addTask(setKnownVal);
     userScheduler.addTask(getLocalNumItem);
     userScheduler.addTask(setStorageNumItem);
     userScheduler.addTask(setReferenceWeight);
+
+}
+
+/**
+ * @brief For non interrupt buttons
+ * 
+ */
+void checkButtonStates(void){
+    if(digitalRead(button1) == LOW){
+        buttonPress_one();
+    }
+
+    if(digitalRead(button2) == LOW){
+        buttonPress_two();
+    }
+
+    if(digitalRead(button3) == LOW){
+        buttonPress_three();
+    }
 }
 
 // Buffer used for drawing to the LCD (16 chars wide)
@@ -77,9 +141,13 @@ void drawScreen(void){
     switch(screenState){
         case(HOME):
             if(displayGrams){
-                numItems = (unsigned int) getWeightGrams();
+                numItems = getWeightGrams();
             }else{
                 numItems = getNumItems();
+            }
+
+            if(numItems < 0){
+                numItems = 0;
             }
 
             // Write number first as this uses isFirstDraw var
@@ -101,9 +169,11 @@ void drawScreen(void){
                     }
                     lastNumLength = numItemsSetLength;
                 }
+                // Draw updated number every time
                 lcd.setCursor(frontPadding, 0);
                 lcd.print(String(numItems));
             }else{
+                // 10000000000 should be grams or num this is too many
                 lcd.setCursor(0, 0);
                 lcd.print("      ERROR      ");
             }
@@ -208,6 +278,134 @@ void drawMenu(void){
                 isFirstDraw = false;
             }
             break;
+        
+        #ifdef ROOT
+
+        case(MENU_SETTINGS_SERVER):
+            if(isFirstDraw){
+                lcd.setCursor(0, 0);
+                lcd.print("Settings  Server");
+                lcd.setCursor(0, 1);
+                lcd.print("<   continue   >");
+                isFirstDraw = false;
+            }
+            break;
+
+        case(MENU_SETTINGS_SERVER_CONFIRM):
+            if(isFirstDraw){
+                httpServerOn();
+                String ipAp = getAPIPStr();
+                lcd.setCursor((int)(16 - ipAp.length()) / 2, 0);
+                lcd.print(ipAp);
+                lcd.setCursor(0, 1);
+                lcd.print("      stop      ");
+                isFirstDraw = false;
+            }
+            break;
+
+        case(MENU_SETTINGS_CHECK_ROOT):
+            if(isFirstDraw){
+                lcd.setCursor(0, 0);
+                lcd.print("Check R Settings");
+                lcd.setCursor(0, 1);
+                lcd.print("<   continue   >");
+                isFirstDraw = false;
+            }
+            break;
+        case(MENU_SETTINGS_CHECK_ROOT_CONFIRM):
+            if(isFirstDraw){
+                lcd.setCursor(0, 0);
+                lcd.print(" WIFI ");
+                lcd.setCursor(8, 0);
+                lcd.print("Login ");
+                lcd.setCursor(0, 1);
+                lcd.print("      exit    ");
+                isFirstDraw = false;
+            }
+
+            if(WiFi.status()== WL_CONNECTED){
+                lcd.setCursor(6, 0);
+                lcd.write(byte(0));
+            }else{
+                lcd.setCursor(6, 0);
+                lcd.write(byte(1));
+            }
+
+            if(hadSuccessfulLogin()){
+                lcd.setCursor(14, 0);
+                lcd.write(byte(0));
+            }else{
+                lcd.setCursor(14, 0);
+                lcd.write(byte(1));
+            }
+
+            break;
+        #endif
+
+        case(MENU_SETTINGS_CHECK_NODE):
+            if(isFirstDraw){
+                lcd.setCursor(0, 0);
+                lcd.print("Check N Settings");
+                lcd.setCursor(0, 1);
+                lcd.print("<   continue   >");
+                isFirstDraw = false;
+            }
+            break;
+        case(MENU_SETTINGS_CHECK_NODE_CONFIRM):
+            if(isFirstDraw){
+                lcd.setCursor(0, 0);
+                lcd.print("Root ");
+                lcd.setCursor(7, 0);
+                lcd.print("Num ");
+                lcd.setCursor(0, 1);
+                lcd.print("      exit    ");
+                isFirstDraw = false;
+            }
+
+            if(getIfBridgeExists()){
+                lcd.setCursor(5, 0);
+                lcd.write(byte(0));
+            }else{
+                lcd.setCursor(5, 0);
+                lcd.write(byte(1));
+            }
+
+            lcd.setCursor(11, 0);
+            lcd.print(getNumConnectedNodes());
+
+            break;
+        case(MENU_SETTINGS_UPDATE_NAME_PASS):
+            if(isFirstDraw){
+                lcd.setCursor(0, 0);
+                lcd.print("Update Mesh Info");
+                lcd.setCursor(0, 1);
+                lcd.print("<   continue   >");
+                isFirstDraw = false;
+            }
+            break;
+        case(MENU_SETTINGS_UPDATE_NAME_PASS_CONFIRM):
+            drawMeshInfoUpdate();
+            break;
+        case(MENU_SETTINGS_SHOW_ID):
+            if(isFirstDraw){
+                lcd.setCursor(0, 0);
+                lcd.print("  Show Mesh ID  ");
+                lcd.setCursor(0, 1);
+                lcd.print("<   continue   >");
+                isFirstDraw = false;
+            }
+            break;
+        case(MENU_SETTINGS_SHOW_ID_CONFIRM):
+            if(isFirstDraw){
+                lcd.setCursor(0, 0);
+                lcd.print("   ");
+                lcd.setCursor(3, 0);
+                lcd.print(getMeshID());
+                lcd.setCursor(0, 1);
+                lcd.print("      exit     ");
+                isFirstDraw = false;
+            }
+            break;
     }
 }
 
@@ -268,7 +466,7 @@ void drawWeightSet(void){
     switch(weightSetState){
         case(WEIGHT_SET_CURRENT):
             if(isFirstDraw){
-                double currentStored = getReferenceWeightOfItemsGrams();
+                double currentStored = deviceSettings.referenceWeight;
                 // double currentStored = 10000000000000;
                 int len = (int)log10(currentStored) + 1;
                 if(len > 6 && len < 17){
@@ -310,6 +508,39 @@ void drawWeightSet(void){
                 lcd.setCursor((int)(16 - len - 1) / 2, 0);
                 sprintf(buffer, "%.0fg", weightGrams);
                 lcd.print(buffer);
+            }
+            break;
+    }
+}
+
+/**
+ * @brief used for drawing menu items to update name and password of mesh
+ * 
+ */
+void IRAM_ATTR drawMeshInfoUpdate(void){
+    switch(meshUpdateSetState){
+        case(UPDATE_MESH_NAME):
+            if(isFirstDraw){
+                lcd.setCursor(0, 0);
+                lcd.print("      " + meshName);
+                lcd.setCursor(0, 1);
+                lcd.print("-      set     +");
+                isFirstDraw = false;
+                lcd.setCursor(6 + updateCursorPos, 0);
+                lcd.blink_on();
+                lcd.cursor_on();
+            }
+            break;
+        case(UPDATE_MESH_PASSWORD):
+            if(isFirstDraw){
+                lcd.setCursor(0, 0);
+                lcd.print("      " + meshPassword);
+                lcd.setCursor(0, 1);
+                lcd.print("-      set     +");
+                isFirstDraw = false;
+                lcd.setCursor(6 + updateCursorPos, 0);
+                lcd.blink_on();
+                lcd.cursor_on();
             }
             break;
     }
@@ -385,8 +616,39 @@ void IRAM_ATTR threeMenuPressed(void){
             threeCalibrationPress();
             break;
         case(MENU_DISPLAY_UNITS):
+            #ifdef ROOT
+            menuState = MENU_SETTINGS_SERVER;
+            #else
+            menuState = MENU_SETTINGS_CHECK_NODE;
+            #endif
+            drawUI.forceNextIteration();
+            break;
+        case(MENU_SETTINGS_SERVER):
+            menuState = MENU_SETTINGS_CHECK_ROOT;
+            drawUI.forceNextIteration();
+            break;
+        case(MENU_SETTINGS_SERVER_CONFIRM):
+            break;
+        case(MENU_SETTINGS_CHECK_ROOT):
+            menuState = MENU_SETTINGS_CHECK_NODE;
+            drawUI.forceNextIteration();
+            break;
+        case(MENU_SETTINGS_CHECK_NODE):
+            menuState = MENU_SETTINGS_UPDATE_NAME_PASS;
+            drawUI.forceNextIteration();
+            break;
+        case(MENU_SETTINGS_UPDATE_NAME_PASS):
+            menuState = MENU_SETTINGS_SHOW_ID;
+            drawUI.forceNextIteration();
+            break;
+        case(MENU_SETTINGS_UPDATE_NAME_PASS_CONFIRM):
+            threeMenuMeshInfoUpdate();
+            break;
+        case(MENU_SETTINGS_SHOW_ID):
             menuState = MENU_EXIT;
             drawUI.forceNextIteration();
+            break;
+        case(MENU_SETTINGS_SHOW_ID_CONFIRM):
             break;
     }
 }
@@ -427,6 +689,35 @@ void IRAM_ATTR threeMenuWeightSetPress(void){
             // Do nothing
             break;
     }
+}
+
+/**
+ * @brief button pressed when UI is updating name and password of mesh
+ * 
+ */
+void IRAM_ATTR threeMenuMeshInfoUpdate(void){
+    switch(meshUpdateSetState){
+        case(UPDATE_MESH_NAME):
+            meshName[updateCursorPos]++;
+
+            if(meshName[updateCursorPos] == ('Z' + 1)){
+                meshName[updateCursorPos] = '0';
+            }else if(meshName[updateCursorPos] == ('9' + 1)){
+                meshName[updateCursorPos] = 'A';
+            }
+            break;
+        case(UPDATE_MESH_PASSWORD):
+            meshPassword[updateCursorPos]++;
+
+            if(meshPassword[updateCursorPos] == ('Z' + 1)){
+                meshPassword[updateCursorPos] = '0';
+            }else if(meshPassword[updateCursorPos] == ('9' + 1)){
+                meshPassword[updateCursorPos] = 'A';
+            }
+            break;
+    }
+
+    drawUI.forceNextIteration();
 }
 
 /**
@@ -503,6 +794,52 @@ void IRAM_ATTR twoMenuPressed(void){
             displayGrams = !displayGrams;
             drawUI.forceNextIteration();
             break;
+        
+        #ifdef ROOT
+
+        case(MENU_SETTINGS_SERVER):
+            menuState = MENU_SETTINGS_SERVER_CONFIRM;
+            drawUI.forceNextIteration();
+            break;
+        case(MENU_SETTINGS_SERVER_CONFIRM):
+            httpServerOff();
+            menuState = MENU_SETTINGS_SERVER;
+            drawUI.forceNextIteration();
+            break;
+        case(MENU_SETTINGS_CHECK_ROOT):
+            menuState = MENU_SETTINGS_CHECK_ROOT_CONFIRM;
+            drawUI.forceNextIteration();
+            break;
+        case(MENU_SETTINGS_CHECK_ROOT_CONFIRM):
+            menuState = MENU_SETTINGS_CHECK_ROOT;
+            drawUI.forceNextIteration();
+            break;
+        #endif
+        case(MENU_SETTINGS_CHECK_NODE):
+            menuState = MENU_SETTINGS_CHECK_NODE_CONFIRM;
+            drawUI.forceNextIteration();
+            break;
+        case(MENU_SETTINGS_CHECK_NODE_CONFIRM):
+            menuState = MENU_SETTINGS_CHECK_NODE;
+            drawUI.forceNextIteration();
+            break;
+        case(MENU_SETTINGS_UPDATE_NAME_PASS):
+            menuState = MENU_SETTINGS_UPDATE_NAME_PASS_CONFIRM;
+            meshName = deviceSettings.meshName;
+            meshPassword = deviceSettings.meshPassword;
+            drawUI.forceNextIteration();
+            break;
+        case(MENU_SETTINGS_UPDATE_NAME_PASS_CONFIRM):
+            twoMenuMeshInfoUpdate();
+            break;
+        case(MENU_SETTINGS_SHOW_ID):
+            menuState = MENU_SETTINGS_SHOW_ID_CONFIRM;
+            drawUI.forceNextIteration();
+            break;
+        case(MENU_SETTINGS_SHOW_ID_CONFIRM):
+            menuState = MENU_SETTINGS_SHOW_ID;
+            drawUI.forceNextIteration();
+            break;
     }
 }
 
@@ -561,6 +898,48 @@ void IRAM_ATTR twoMenuWeightSetPress(void){
 }
 
 /**
+ * @brief button two pressed when UI is updating name and password of mesh
+ * 
+ */
+void IRAM_ATTR twoMenuMeshInfoUpdate(void){
+    updateCursorPos++;
+
+    switch(meshUpdateSetState){
+        case(UPDATE_MESH_NAME):
+            if(updateCursorPos > MESH_NAME_SIZE - 1){
+                meshUpdateSetState = UPDATE_MESH_PASSWORD;
+                updateCursorPos = 0;
+            }
+            break;
+        case(UPDATE_MESH_PASSWORD):
+            if(updateCursorPos > MESH_NAME_SIZE - 1){
+                meshUpdateSetState = UPDATE_MESH_NAME;
+                menuState = MENU_SETTINGS_UPDATE_NAME_PASS;
+                updateCursorPos = 0;
+                lcd.blink_off();
+                lcd.cursor_off();
+                Serial.println("Before = " + deviceSettings.meshName + ", " + deviceSettings.meshPassword + " - After = " + meshName + ", " + meshPassword);
+                bool restart = false;
+                if(deviceSettings.meshName != meshName){
+                    saveMeshName(meshName);
+                    restart = true;
+                }
+
+                if(deviceSettings.meshPassword != meshPassword){
+                    saveMeshPassword(meshPassword);
+                    restart = true;
+                }
+
+                if(restart){
+                    ESP.restart();
+                }
+            }
+            break;
+    }
+    drawUI.forceNextIteration();
+}
+
+/**
  * @brief Interrupt function for button one
  * 
  */
@@ -580,6 +959,9 @@ void IRAM_ATTR buttonPress_one(void){
 void IRAM_ATTR onePressed(void){
     switch(screenState){
         case(HOME):
+            // zero scale
+            zeroScale.setIterations(TASK_ONCE);
+            zeroScale.enableIfNot();
             break;
         case(MENU):
             oneMenuPressed();
@@ -598,7 +980,7 @@ void IRAM_ATTR onePressed(void){
 void IRAM_ATTR oneMenuPressed(void){
     switch(menuState){
         case(MENU_EXIT):
-            menuState = MENU_DISPLAY_UNITS;
+            menuState = MENU_SETTINGS_SHOW_ID;
             drawUI.forceNextIteration();
             break;
         case(MENU_SET_MIN):
@@ -635,6 +1017,37 @@ void IRAM_ATTR oneMenuPressed(void){
         case(MENU_DISPLAY_UNITS):
             menuState = MENU_CALIBRATE_SCALE;
             drawUI.forceNextIteration();
+            break;
+        case(MENU_SETTINGS_SERVER):
+            menuState = MENU_DISPLAY_UNITS;
+            drawUI.forceNextIteration();
+            break;
+        case(MENU_SETTINGS_SERVER_CONFIRM):
+            break;
+        case(MENU_SETTINGS_CHECK_ROOT):
+            menuState = MENU_SETTINGS_SERVER;
+            drawUI.forceNextIteration();
+            break;
+        case(MENU_SETTINGS_CHECK_NODE):
+            #ifdef ROOT
+            menuState = MENU_SETTINGS_CHECK_ROOT;
+            #else
+            menuState = MENU_DISPLAY_UNITS;
+            #endif
+            drawUI.forceNextIteration();
+            break;
+        case(MENU_SETTINGS_UPDATE_NAME_PASS):
+            menuState = MENU_SETTINGS_CHECK_NODE;
+            drawUI.forceNextIteration();
+            break;
+        case(MENU_SETTINGS_UPDATE_NAME_PASS_CONFIRM):
+            oneMenuMeshInfoUpdate();
+            break;
+        case(MENU_SETTINGS_SHOW_ID):
+            menuState = MENU_SETTINGS_UPDATE_NAME_PASS;
+            drawUI.forceNextIteration();
+            break;
+        case(MENU_SETTINGS_SHOW_ID_CONFIRM):
             break;
     }
 }
@@ -678,11 +1091,39 @@ void IRAM_ATTR oneMenuWeightSetPress(void){
 }
 
 /**
+ * @brief button three pressed when UI is updating name and password of mesh
+ * 
+ */
+void IRAM_ATTR oneMenuMeshInfoUpdate(void){
+    switch(meshUpdateSetState){
+        case(UPDATE_MESH_NAME):
+            meshName[updateCursorPos]--;
+
+            if(meshName[updateCursorPos] == ('A' - 1)){
+                meshName[updateCursorPos] = '9';
+            }else if(meshName[updateCursorPos] == ('0' - 1)){
+                meshName[updateCursorPos] = 'Z';
+            }
+            break;
+        case(UPDATE_MESH_PASSWORD):
+            meshPassword[updateCursorPos]--;
+
+            if(meshPassword[updateCursorPos] == ('A' - 1)){
+                meshPassword[updateCursorPos] = '9';
+            }else if(meshPassword[updateCursorPos] == ('0' - 1)){
+                meshPassword[updateCursorPos] = 'Z';
+            }
+            break;
+    }
+    drawUI.forceNextIteration();
+}
+
+/**
  * @brief Retieve stored value of numItemsSet from the eeprom
  * 
  */
 void getLocalNumItemsPerWeightVal(void){
-    numItemsSet = getNumItemsPerWeightVal();
+    numItemsSet = deviceSettings.numItemsPerWeight;
 }
 
 /**
@@ -690,7 +1131,7 @@ void getLocalNumItemsPerWeightVal(void){
  * 
  */
 void setStorageNumItemsPerWeightVal(void){
-    setNumItemsPerWeightVal(numItemsSet);
+    setNumItemsPerWeightVal(numItemsSet, true);
 }
 
 /**
@@ -698,11 +1139,6 @@ void setStorageNumItemsPerWeightVal(void){
  * 
  */
 void saveReferenceWeightToStorage(void){
-    setReferenceWeightOfItems(getWeightGrams());
+    setReferenceWeightOfItems(getWeightGrams(), true);
 }
 
-unsigned int getNumItems(void){
-    double ref = getReferenceWeightOfItemsGrams();
-    unsigned int numItems = getNumItemsPerWeightVal();
-    return (unsigned int) round(getWeightGrams() / (ref / numItems));
-}
