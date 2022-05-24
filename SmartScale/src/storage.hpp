@@ -31,7 +31,6 @@ class DeviceSettings{
     public:
         static DeviceSettings* getInstance(){
             static DeviceSettings INSTANCE;
-            // INSTANCE.setup();
             return &INSTANCE;
         }
 
