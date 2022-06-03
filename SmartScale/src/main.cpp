@@ -32,7 +32,7 @@ void setup(){
   // DeviceSettings* set = DeviceSettings::getInstance();
 
   setupMesh(userScheduler);
-  setupLC(userScheduler, DOUT, CLK);
+  LoadCell::setupLoadCell(userScheduler, DOUT, CLK);
   // LCD uses defualt i2c pins
   setupUI(userScheduler, BUTTON_1, BUTTON_2, BUTTON_3);
   #ifdef ROOT

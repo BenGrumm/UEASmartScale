@@ -51,8 +51,8 @@ byte Cross[] = {
 Task checkButton(TASK_SECOND / 500, TASK_FOREVER, &checkButtonStates);
 
 Task drawUI(TASK_SECOND * 1, TASK_FOREVER, &drawScreen);
-Task zeroScale(TASK_IMMEDIATE, TASK_ONCE, &zeroTare);
-Task setKnownVal(TASK_IMMEDIATE, TASK_ONCE, &calibrateScale);
+Task* zeroScale;
+Task* setKnownVal;
 Task getLocalNumItem(TASK_IMMEDIATE, TASK_ONCE, &getLocalNumItemsPerWeightVal);
 Task setStorageNumItem(TASK_IMMEDIATE, TASK_ONCE, &setStorageNumItemsPerWeightVal);
 Task setReferenceWeight(TASK_IMMEDIATE, TASK_ONCE, &saveReferenceWeightToStorage);
@@ -64,6 +64,9 @@ LiquidCrystal_I2C lcd(0x27,20,4);  // set the LCD address to 0x27 for a 16 chars
  * See header file for more
  */
 void setupUI(Scheduler &userScheduler, int button1Pin, int button2Pin, int button3Pin){
+    zeroScale = new Task(TASK_IMMEDIATE, TASK_ONCE, LoadCell::zeroTare);
+    setKnownVal = new Task(TASK_IMMEDIATE, TASK_ONCE, LoadCell::calibrateScale);
+
     local_ui_settings = DeviceSettings::getInstance();
 
     lcd.init();                      // initialize the lcd 
@@ -96,8 +99,8 @@ void setupUI(Scheduler &userScheduler, int button1Pin, int button2Pin, int butto
     checkButton.enable();
     Serial.println("Done");
 
-    userScheduler.addTask(zeroScale); // enabled in interrupt
-    userScheduler.addTask(setKnownVal);
+    userScheduler.addTask(*zeroScale); // enabled in interrupt
+    userScheduler.addTask(*setKnownVal);
     userScheduler.addTask(getLocalNumItem);
     userScheduler.addTask(setStorageNumItem);
     userScheduler.addTask(setReferenceWeight);
@@ -145,9 +148,9 @@ void drawScreen(void){
     switch(screenState){
         case(HOME):
             if(displayGrams){
-                numItems = getWeightGrams();
+                numItems = LoadCell::getWeightGrams();
             }else{
-                numItems = getNumItems();
+                numItems = LoadCell::getNumItems();
             }
 
             if(numItems < 0){
@@ -497,7 +500,7 @@ void drawWeightSet(void){
                 isFirstDraw = false;
             }
 
-            double weightGrams = getWeightGrams();
+            double weightGrams = LoadCell::getWeightGrams();
             int len = (int)log10(weightGrams) + 1;
             if(len >= 15){
                 // ERROR Handling
@@ -856,8 +859,8 @@ void IRAM_ATTR twoCalibrationPress(void){
         case(CALIBRATE_ZERO):
             calibrateState = CALIBRATE_SET_WEIGHT_PROMPT;
             // Zero now
-            zeroScale.setIterations(TASK_ONCE);
-            zeroScale.enableIfNot();
+            zeroScale->setIterations(TASK_ONCE);
+            zeroScale->enableIfNot();
             drawUI.forceNextIteration();
             break;
         case(CALIBRATE_SET_WEIGHT_PROMPT):
@@ -866,15 +869,15 @@ void IRAM_ATTR twoCalibrationPress(void){
             break;
         case(CALIBRATE_SET_WEIGHT):
             calibrateState = CALIBRATE_PLACE_WEIGHT;
-            setKnownWeight(knownWeight * 100);
+            LoadCell::setKnownWeight(knownWeight * 100);
             drawUI.forceNextIteration();
             break;
         case(CALIBRATE_PLACE_WEIGHT):
             calibrateState = CALIBRATE_ZERO;
             menuState = MENU_CALIBRATE_SCALE;
             // Calculate val
-            setKnownVal.setIterations(TASK_ONCE);
-            setKnownVal.enableIfNot();
+            setKnownVal->setIterations(TASK_ONCE);
+            setKnownVal->enableIfNot();
             drawUI.forceNextIteration();
             break;
     }
@@ -964,8 +967,8 @@ void IRAM_ATTR onePressed(void){
     switch(screenState){
         case(HOME):
             // zero scale
-            zeroScale.setIterations(TASK_ONCE);
-            zeroScale.enableIfNot();
+            zeroScale->setIterations(TASK_ONCE);
+            zeroScale->enableIfNot();
             break;
         case(MENU):
             oneMenuPressed();
@@ -1143,6 +1146,6 @@ void setStorageNumItemsPerWeightVal(void){
  * 
  */
 void saveReferenceWeightToStorage(void){
-    local_ui_settings->setReferenceWeightOfItems(getWeightGrams(), true);
+    local_ui_settings->setReferenceWeightOfItems(LoadCell::getWeightGrams(), true);
 }
 

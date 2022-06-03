@@ -1,11 +1,11 @@
 #include "loadcell.hpp"
 
-HX711 scale;
-unsigned int userKnowWeight = 1000; // Known weight in grams
+HX711 LoadCell::scale;
+unsigned int LoadCell::userKnowWeight = 1000; // Known weight in grams
 
-DeviceSettings* local_loadcell_settings;
+DeviceSettings* LoadCell::local_loadcell_settings;
 
-Task checkAndUpdateScaleNum(TASK_SECOND * 15, TASK_FOREVER, &checkNumItemsAndUpdate);
+Task* LoadCell::checkAndUpdateScaleNum;
 
 /**
  * @brief Setup the communication with HX711 and implement stored settings
@@ -14,14 +14,17 @@ Task checkAndUpdateScaleNum(TASK_SECOND * 15, TASK_FOREVER, &checkNumItemsAndUpd
  * @param dataPin pin to use for data to HX711
  * @param clkPin pin to use for clock to HX711
  */
-void setupLC(Scheduler &userScheduler, unsigned int dataPin, unsigned int clkPin){
+void LoadCell::setupLoadCell(Scheduler &userScheduler, unsigned int dataPin, unsigned int clkPin){
+    userKnowWeight = 1000;
+    checkAndUpdateScaleNum = new Task(TASK_SECOND * 15, TASK_FOREVER, LoadCell::checkNumItemsAndUpdate);
+
     local_loadcell_settings = DeviceSettings::getInstance();
 
     scale.begin(dataPin, clkPin);
 
     // Retrieve stored vals (if any)
-    long zeroFac = local_loadcell_settings->zeroFactor;
-    float calVal = local_loadcell_settings->calibrationVal;
+    long zeroFac = LoadCell::local_loadcell_settings->zeroFactor;
+    float calVal = LoadCell::local_loadcell_settings->calibrationVal;
 
     Serial.print("Zero Factor = ");
     Serial.println(zeroFac);
@@ -29,19 +32,19 @@ void setupLC(Scheduler &userScheduler, unsigned int dataPin, unsigned int clkPin
     Serial.println(calVal);
 
     // Configure with stored vals
-    scale.set_scale(calVal);
-    scale.set_offset(zeroFac); //Used for taring / zeroing
+    LoadCell::scale.set_scale(calVal);
+    LoadCell::scale.set_offset(zeroFac); //Used for taring / zeroing
 
     // Create task for reading values
-    userScheduler.addTask(checkAndUpdateScaleNum);
-    checkAndUpdateScaleNum.enableDelayed(TASK_SECOND * 10);
+    userScheduler.addTask(*checkAndUpdateScaleNum);
+    checkAndUpdateScaleNum->enableDelayed(TASK_SECOND * 10);
 }
 
 /**
  * @brief When called will zero the scale with the current weight on it
  * 
  */
-void zeroTare(void){
+void LoadCell::zeroTare(void){
     Serial.println("Zero");
     long avg = scale.read_average();
 
@@ -55,7 +58,7 @@ void zeroTare(void){
  * 
  * @return double 
  */
-double getWeightGrams(void){
+double LoadCell::getWeightGrams(void){
     return scale.get_units();
 }
 
@@ -63,7 +66,7 @@ double getWeightGrams(void){
  * @brief Read the scale value and store in memory
  * 
  */
-void readScale(void){
+void LoadCell::readScale(void){
     local_loadcell_settings->saveWeight(scale.get_units());
 }
 
@@ -72,7 +75,7 @@ void readScale(void){
  *        value stored as the known val
  * 
  */
-void calibrateScale(void){
+void LoadCell::calibrateScale(void){
     Serial.println("Calibrate");
     scale.set_scale(1);
     double calibrationFactor = scale.get_units(10) / userKnowWeight;
@@ -86,7 +89,7 @@ void calibrateScale(void){
  * 
  * @param knownVal value to store
  */
-void setKnownWeight(unsigned int knownVal){
+void LoadCell::setKnownWeight(unsigned int knownVal){
     userKnowWeight = knownVal;
 }
 
@@ -95,7 +98,7 @@ void setKnownWeight(unsigned int knownVal){
  * 
  * @return unsigned int number of items on the scale
  */
-double getNumItems(void){
+double LoadCell::getNumItems(void){
     double ref = local_loadcell_settings->referenceWeight;
     unsigned int numItems = local_loadcell_settings->numItemsPerWeight;
     return round(getWeightGrams() / (ref / numItems));
@@ -108,7 +111,7 @@ unsigned int lastKnownWeight = 2868;
  * send to the mesh client to be sent to root and updated on the server
  * 
  */
-void checkNumItemsAndUpdate(void){
+void LoadCell::checkNumItemsAndUpdate(void){
     double currentNum = getNumItems();
 
     if(currentNum < 0){
