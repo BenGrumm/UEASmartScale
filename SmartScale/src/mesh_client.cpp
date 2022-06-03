@@ -156,7 +156,7 @@ void ackUpdatedSettings(void){
         addSettingsAckID(mesh.getNodeId());
         #endif
     }else{
-        mesh.sendSingle(local_mesh_settings->bridgeID, "{\"ACK_RECEIVED\":true");
+        mesh.sendSingle(local_mesh_settings->bridgeID, "{\"ACK_NODE_RECEIVED\":true}");
     }
 }
 
@@ -179,7 +179,7 @@ void sendSettingsToNode(JsonObject jsonSettings){
     }
 
     sentNodeSettings.clear();
-    JsonObject obj = sentNodeSettings.createNestedObject(RECIEVED_UPDATED_SETTINGS);
+    JsonObject obj = sentNodeSettings.createNestedObject(UPDATE_SETTINGS);
     obj.set(jsonSettings);
 
     String msg;

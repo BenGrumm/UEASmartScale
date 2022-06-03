@@ -8,7 +8,7 @@
 #include "storage.hpp"
 #include "mesh_client.hpp"
 
-const String SERVER_IP = "http://192.168.1.101:8000";
+const String SERVER_IP = "http://192.168.1.100:8000";
 
 /**
  * @brief Setup json objects used in http_request functions. Create recurrent task on 

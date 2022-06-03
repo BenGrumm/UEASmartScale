@@ -218,8 +218,12 @@ bool updateSettings(void){
             authorise();
         }
     }else if(http_local_settings->jwt == ""){
+        Serial.println("Need Auth");
         authorise();
+    }else{
+        Serial.println("Size empty");
     }
+
 
     return false;
 }
