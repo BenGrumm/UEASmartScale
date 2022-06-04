@@ -34,7 +34,7 @@ void setup(){
   Mesh_Client::setupMesh(userScheduler);
   LoadCell::setupLoadCell(userScheduler, DOUT, CLK);
   // LCD uses defualt i2c pins
-  setupUI(userScheduler, BUTTON_1, BUTTON_2, BUTTON_3);
+  UI::setupUI(userScheduler, BUTTON_1, BUTTON_2, BUTTON_3);
   #ifdef ROOT
   Serial.println("ROOT Def");
   Settings_Server::setupServer(Mesh_Client::getMeshAPIP());

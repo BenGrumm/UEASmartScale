@@ -1,32 +1,32 @@
 #include "ui.hpp"
 
-DeviceSettings* local_ui_settings;
+DeviceSettings* UI::local_ui_settings;
 
 // vars for debouncing
-unsigned long button1LastPress = 0;
-unsigned long button2LastPress = 0;
-unsigned long button3LastPress = 0;
-unsigned long debounceDelay = 200;
+unsigned long UI::button1LastPress = 0;
+unsigned long UI::button2LastPress = 0;
+unsigned long UI::button3LastPress = 0;
+unsigned long UI::debounceDelay = 200;
 
-uint8_t button1 = 0;
-uint8_t button2 = 0;
-uint8_t button3 = 0;
+uint8_t UI::button1 = 0;
+uint8_t UI::button2 = 0;
+uint8_t UI::button3 = 0;
 
-unsigned int screenState = HOME; // current lcd state
-unsigned int menuState = MENU_EXIT;
-unsigned int calibrateState = CALIBRATE_ZERO;
-unsigned int weightSetState = WEIGHT_SET_CURRENT;
-unsigned int meshUpdateSetState = UPDATE_MESH_NAME;
-volatile unsigned int numItemsSet = 1; // temp var for the num items in the MENU_NUMBER_SCREEN state
-uint8_t updateCursorPos = 0;
-String meshName = "HELLO";
-String meshPassword = "12345";
+unsigned int UI::screenState = HOME; // current lcd state
+unsigned int UI::menuState = MENU_EXIT;
+unsigned int UI::calibrateState = CALIBRATE_ZERO;
+unsigned int UI::weightSetState = WEIGHT_SET_CURRENT;
+unsigned int UI::meshUpdateSetState = UPDATE_MESH_NAME;
+volatile unsigned int UI::numItemsSet = 1; // temp var for the num items in the MENU_NUMBER_SCREEN state
+uint8_t UI::updateCursorPos = 0;
+String UI::meshName = "HELLO";
+String UI::meshPassword = "12345";
 
-bool isFirstDraw = true;
-bool displayGrams = false;
+bool UI::isFirstDraw = true;
+bool UI::displayGrams = false;
 
 // Custom characters for LCD
-byte Check[] = {
+byte UI::Check[] = {
     B00000,
     B00001,
     B00011,
@@ -37,7 +37,7 @@ byte Check[] = {
     B00000
 };
 
-byte Cross[] = {
+byte UI::Cross[] = {
     B00000,
     B10001,
     B11011,
@@ -48,22 +48,22 @@ byte Cross[] = {
     B00000
 };
 
-Task checkButton(TASK_SECOND / 500, TASK_FOREVER, &checkButtonStates);
+Task UI::checkButton(TASK_SECOND / 500, TASK_FOREVER, &checkButtonStates);
 
-Task drawUI(TASK_SECOND * 1, TASK_FOREVER, &drawScreen);
-Task* zeroScale;
-Task* setKnownVal;
-Task getLocalNumItem(TASK_IMMEDIATE, TASK_ONCE, &getLocalNumItemsPerWeightVal);
-Task setStorageNumItem(TASK_IMMEDIATE, TASK_ONCE, &setStorageNumItemsPerWeightVal);
-Task setReferenceWeight(TASK_IMMEDIATE, TASK_ONCE, &saveReferenceWeightToStorage);
+Task UI::drawUI(TASK_SECOND * 1, TASK_FOREVER, &drawScreen);
+Task* UI::zeroScale;
+Task* UI::setKnownVal;
+Task UI::getLocalNumItem(TASK_IMMEDIATE, TASK_ONCE, &getLocalNumItemsPerWeightVal);
+Task UI::setStorageNumItem(TASK_IMMEDIATE, TASK_ONCE, &setStorageNumItemsPerWeightVal);
+Task UI::setReferenceWeight(TASK_IMMEDIATE, TASK_ONCE, &saveReferenceWeightToStorage);
 
-LiquidCrystal_I2C lcd(0x27,20,4);  // set the LCD address to 0x27 for a 16 chars and 2 line display
+LiquidCrystal_I2C UI::lcd(0x27,20,4);  // set the LCD address to 0x27 for a 16 chars and 2 line display
 
 /**
  * @brief Function used to setup the UI pins and tasks
  * See header file for more
  */
-void setupUI(Scheduler &userScheduler, int button1Pin, int button2Pin, int button3Pin){
+void UI::setupUI(Scheduler &userScheduler, int button1Pin, int button2Pin, int button3Pin){
     zeroScale = new Task(TASK_IMMEDIATE, TASK_ONCE, LoadCell::zeroTare);
     setKnownVal = new Task(TASK_IMMEDIATE, TASK_ONCE, LoadCell::calibrateScale);
 
@@ -111,7 +111,7 @@ void setupUI(Scheduler &userScheduler, int button1Pin, int button2Pin, int butto
  * @brief For non interrupt buttons
  * 
  */
-void checkButtonStates(void){
+void UI::checkButtonStates(void){
     if(digitalRead(button1) == LOW){
         buttonPress_one();
     }
@@ -126,21 +126,21 @@ void checkButtonStates(void){
 }
 
 // Buffer used for drawing to the LCD (16 chars wide)
-char buffer[16];
+char UI::buffer[16];
 
 // Vars used in drawing
-unsigned int numItems = 359;
-unsigned int lastNumLength = 3;
-unsigned int numItemsSetLength = 0;
-unsigned int padding;
-unsigned int frontPadding;
+unsigned int UI::numItems = 359;
+unsigned int UI::lastNumLength = 3;
+unsigned int UI::numItemsSetLength = 0;
+unsigned int UI::padding;
+unsigned int UI::frontPadding;
 
-int knownWeight = 15; // Used for calibrating the cell (10x to prevent floating point in irq)
+int UI::knownWeight = 15; // Used for calibrating the cell (10x to prevent floating point in irq)
 
 /**
  * @brief Main draw screen function called by task scheduler periodically
  */
-void drawScreen(void){
+void UI::drawScreen(void){
     Serial.println("Draw");
     if(isFirstDraw){
         lcd.clear();
@@ -208,7 +208,7 @@ void drawScreen(void){
  * @brief Function to draw the current menu state to lcd
  * 
  */
-void drawMenu(void){
+void UI::drawMenu(void){
     switch(menuState){
         case(MENU_EXIT):
             if(isFirstDraw){
@@ -420,7 +420,7 @@ void drawMenu(void){
  * @brief Draw the calibration menu base on current state
  * 
  */
-void drawCalibration(void){
+void UI::drawCalibration(void){
     switch(calibrateState){
         case(CALIBRATE_ZERO):
             if(isFirstDraw){
@@ -469,7 +469,7 @@ void drawCalibration(void){
  * @brief Draw the screen when in the weight set confirm state
  * 
  */
-void drawWeightSet(void){
+void UI::drawWeightSet(void){
     switch(weightSetState){
         case(WEIGHT_SET_CURRENT):
             if(isFirstDraw){
@@ -524,7 +524,7 @@ void drawWeightSet(void){
  * @brief used for drawing menu items to update name and password of mesh
  * 
  */
-void IRAM_ATTR drawMeshInfoUpdate(void){
+void IRAM_ATTR UI::drawMeshInfoUpdate(void){
     switch(meshUpdateSetState){
         case(UPDATE_MESH_NAME):
             if(isFirstDraw){
@@ -557,7 +557,7 @@ void IRAM_ATTR drawMeshInfoUpdate(void){
  * @brief Interrupt function for button three
  * 
  */
-void IRAM_ATTR buttonPress_three(void){
+void IRAM_ATTR UI::buttonPress_three(void){
     if((millis() - button3LastPress) > debounceDelay){
         Serial.println("But 3");
         isFirstDraw = true;
@@ -570,7 +570,7 @@ void IRAM_ATTR buttonPress_three(void){
  * @brief Function called when the third button is pressed
  * 
  */
-void IRAM_ATTR threePressed(void){
+void IRAM_ATTR UI::threePressed(void){
     switch(screenState){
         case(HOME):
             screenState = SLEEP;
@@ -590,7 +590,7 @@ void IRAM_ATTR threePressed(void){
  * @brief Function called when third button is pressed and the UI is in the menu state
  * 
  */
-void IRAM_ATTR threeMenuPressed(void){
+void IRAM_ATTR UI::threeMenuPressed(void){
     switch(menuState){
         case(MENU_EXIT):
             menuState = MENU_SET_MIN;
@@ -664,7 +664,7 @@ void IRAM_ATTR threeMenuPressed(void){
  * @brief Function called on button press 3 when the UI is in the calibration state
  * 
  */
-void IRAM_ATTR threeCalibrationPress(void){
+void IRAM_ATTR UI::threeCalibrationPress(void){
     switch(calibrateState){
         case(CALIBRATE_ZERO):
             break;
@@ -685,7 +685,7 @@ void IRAM_ATTR threeCalibrationPress(void){
  * @brief Function called on button press 3 when UI is in Weight Menu Press
  * 
  */
-void IRAM_ATTR threeMenuWeightSetPress(void){
+void IRAM_ATTR UI::threeMenuWeightSetPress(void){
     switch(weightSetState){
         case(WEIGHT_SET_CURRENT):
             // Confirm want to update
@@ -702,7 +702,7 @@ void IRAM_ATTR threeMenuWeightSetPress(void){
  * @brief button pressed when UI is updating name and password of mesh
  * 
  */
-void IRAM_ATTR threeMenuMeshInfoUpdate(void){
+void IRAM_ATTR UI::threeMenuMeshInfoUpdate(void){
     switch(meshUpdateSetState){
         case(UPDATE_MESH_NAME):
             meshName[updateCursorPos]++;
@@ -731,7 +731,7 @@ void IRAM_ATTR threeMenuMeshInfoUpdate(void){
  * @brief Interrupt function for button two
  * 
  */
-void IRAM_ATTR buttonPress_two(void){
+void IRAM_ATTR UI::buttonPress_two(void){
     if((millis() - button2LastPress) > debounceDelay){
         Serial.println("But 2");
         isFirstDraw = true;
@@ -744,7 +744,7 @@ void IRAM_ATTR buttonPress_two(void){
  * @brief Function called when the second button is pressed
  * 
  */
-void IRAM_ATTR twoPressed(void){
+void IRAM_ATTR UI::twoPressed(void){
     switch(screenState){
         case(HOME):
             screenState = MENU;
@@ -764,7 +764,7 @@ void IRAM_ATTR twoPressed(void){
  * @brief Function called when second button is pressed and the UI is in the menu state
  * 
  */
-void IRAM_ATTR twoMenuPressed(void){
+void IRAM_ATTR UI::twoMenuPressed(void){
     switch(menuState){
         case(MENU_EXIT):
             screenState = HOME;
@@ -854,7 +854,7 @@ void IRAM_ATTR twoMenuPressed(void){
  * @brief Function called on button press 2 when the UI is in the calibration state
  * 
  */
-void IRAM_ATTR twoCalibrationPress(void){
+void IRAM_ATTR UI::twoCalibrationPress(void){
     switch(calibrateState){
         case(CALIBRATE_ZERO):
             calibrateState = CALIBRATE_SET_WEIGHT_PROMPT;
@@ -887,7 +887,7 @@ void IRAM_ATTR twoCalibrationPress(void){
  * @brief Function called on button press 2 when UI is in Weight Menu Press
  * 
  */
-void IRAM_ATTR twoMenuWeightSetPress(void){
+void IRAM_ATTR UI::twoMenuWeightSetPress(void){
     switch(weightSetState){
         case(WEIGHT_SET_CURRENT):
             // Do nothing
@@ -908,7 +908,7 @@ void IRAM_ATTR twoMenuWeightSetPress(void){
  * @brief button two pressed when UI is updating name and password of mesh
  * 
  */
-void IRAM_ATTR twoMenuMeshInfoUpdate(void){
+void IRAM_ATTR UI::twoMenuMeshInfoUpdate(void){
     updateCursorPos++;
 
     switch(meshUpdateSetState){
@@ -950,7 +950,7 @@ void IRAM_ATTR twoMenuMeshInfoUpdate(void){
  * @brief Interrupt function for button one
  * 
  */
-void IRAM_ATTR buttonPress_one(void){
+void IRAM_ATTR UI::buttonPress_one(void){
     if((millis() - button3LastPress) > debounceDelay){
         Serial.println("But 1");
         isFirstDraw = true;
@@ -963,7 +963,7 @@ void IRAM_ATTR buttonPress_one(void){
  * @brief Function called when the first button is pressed
  * 
  */
-void IRAM_ATTR onePressed(void){
+void IRAM_ATTR UI::onePressed(void){
     switch(screenState){
         case(HOME):
             // zero scale
@@ -984,7 +984,7 @@ void IRAM_ATTR onePressed(void){
  * @brief Function called when first button is pressed and the UI is in the menu state
  * 
  */
-void IRAM_ATTR oneMenuPressed(void){
+void IRAM_ATTR UI::oneMenuPressed(void){
     switch(menuState){
         case(MENU_EXIT):
             menuState = MENU_SETTINGS_SHOW_ID;
@@ -1063,7 +1063,7 @@ void IRAM_ATTR oneMenuPressed(void){
  * @brief Function called on button press 1 when the UI is in the calibration state
  * 
  */
-void IRAM_ATTR oneCalibrationPress(void){
+void IRAM_ATTR UI::oneCalibrationPress(void){
     switch(calibrateState){
         case(CALIBRATE_ZERO):
             break;
@@ -1084,7 +1084,7 @@ void IRAM_ATTR oneCalibrationPress(void){
  * @brief Function called on button press 1 when UI is in Weight Menu Press
  * 
  */
-void IRAM_ATTR oneMenuWeightSetPress(void){
+void IRAM_ATTR UI::oneMenuWeightSetPress(void){
     switch(weightSetState){
         case(WEIGHT_SET_CURRENT):
             // Cancel and return
@@ -1101,7 +1101,7 @@ void IRAM_ATTR oneMenuWeightSetPress(void){
  * @brief button three pressed when UI is updating name and password of mesh
  * 
  */
-void IRAM_ATTR oneMenuMeshInfoUpdate(void){
+void IRAM_ATTR UI::oneMenuMeshInfoUpdate(void){
     switch(meshUpdateSetState){
         case(UPDATE_MESH_NAME):
             meshName[updateCursorPos]--;
@@ -1129,7 +1129,7 @@ void IRAM_ATTR oneMenuMeshInfoUpdate(void){
  * @brief Retieve stored value of numItemsSet from the eeprom
  * 
  */
-void getLocalNumItemsPerWeightVal(void){
+void UI::getLocalNumItemsPerWeightVal(void){
     numItemsSet = local_ui_settings->numItemsPerWeight;
 }
 
@@ -1137,7 +1137,7 @@ void getLocalNumItemsPerWeightVal(void){
  * @brief Store the value of numItemsSet in the eeprom
  * 
  */
-void setStorageNumItemsPerWeightVal(void){
+void UI::setStorageNumItemsPerWeightVal(void){
     local_ui_settings->setNumItemsPerWeightVal(numItemsSet, true);
 }
 
@@ -1145,7 +1145,7 @@ void setStorageNumItemsPerWeightVal(void){
  * @brief Save the current weight as the stored value
  * 
  */
-void saveReferenceWeightToStorage(void){
+void UI::saveReferenceWeightToStorage(void){
     local_ui_settings->setReferenceWeightOfItems(LoadCell::getWeightGrams(), true);
 }
 
