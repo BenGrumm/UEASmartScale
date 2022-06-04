@@ -103,7 +103,7 @@ void receivedCallback(const uint32_t &from, const String &msg){
         Serial.println("Updating settings");
         // Bridge has recieved a nodes updated settings add to list
         JsonObject obj = root[UPDATE_SETTINGS];
-        addUpdatedSettings(obj);
+        HTTP_Requests::addUpdatedSettings(obj);
         #endif
     }
     // Received a message from bridge on network with its id
@@ -127,7 +127,7 @@ void receivedCallback(const uint32_t &from, const String &msg){
     // Root receives this if node successfully received its settings update
     else if(root.containsKey(ACK_RECEIVED_SETTINGS) && mesh.isRoot()){
         #ifdef ROOT
-        addSettingsAckID(from);
+        HTTP_Requests::addSettingsAckID(from);
         #endif
     }
 }
@@ -153,7 +153,7 @@ void ackUpdatedSettings(void){
     if(mesh.isRoot()){
         Serial.println("Is Root Update Ack");
         #ifdef ROOT
-        addSettingsAckID(mesh.getNodeId());
+        HTTP_Requests::addSettingsAckID(mesh.getNodeId());
         #endif
     }else{
         mesh.sendSingle(local_mesh_settings->bridgeID, "{\"ACK_NODE_RECEIVED\":true}");
@@ -213,7 +213,7 @@ void sendUpdatedSettings(void){
         #ifdef ROOT
         else{
             Serial.println("Am Bridge");
-            addUpdatedSettings(updatedSettingsObject);
+            HTTP_Requests::addUpdatedSettings(updatedSettingsObject);
         }
         #endif
 

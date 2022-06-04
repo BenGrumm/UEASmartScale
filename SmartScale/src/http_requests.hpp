@@ -8,38 +8,61 @@
 #include "storage.hpp"
 #include "mesh_client.hpp"
 
-const String SERVER_IP = "http://192.168.1.100:8000";
+class DeviceSettings;
 
-/**
- * @brief Setup json objects used in http_request functions. Create recurrent task on 
- * other core for making requqests.
- * 
- * @param userScheduler * was switched to rtos function so no longer needed
- */
-void setupHTTP(Scheduler &userScheduler);
+class HTTP_Requests{
+    public:
+        /**
+         * @brief Setup json objects used in http_request functions. Create recurrent task on 
+         * other core for making requqests.
+         * 
+         * @param userScheduler * was switched to rtos function so no longer needed
+         */
+        static void setupHTTP(Scheduler &userScheduler);
 
-/**
- * @brief Add all settings from JsonObject to buffer of objects to be uploaded
- * to server in http request
- * 
- * @param scaleSettings Object containing id of node and rest of settings to update
- */
-void addUpdatedSettings(JsonObject scaleSettings);
+        /**
+         * @brief Add all settings from JsonObject to buffer of objects to be uploaded
+         * to server in http request
+         * 
+         * @param scaleSettings Object containing id of node and rest of settings to update
+         */
+        static void addUpdatedSettings(JsonObject scaleSettings);
 
-/**
- * @brief Get if the username and password have successfully made a request so user
- * knows if there is a problem
- * 
- * @return true is successful request
- * @return false if either no request was made yet or requests havn't been successful
- */
-bool hadSuccessfulLogin(void);
+        /**
+         * @brief Get if the username and password have successfully made a request so user
+         * knows if there is a problem
+         * 
+         * @return true is successful request
+         * @return false if either no request was made yet or requests havn't been successful
+         */
+        static bool hadSuccessfulLogin(void);
 
-// Function used in file only
-bool authorise(void);
-void uploadSettings(void* args);
-bool updateSettings(void);
-bool getSettingsToUpdate(void);
-void addSettingsAckID(uint32_t id);
+        /**
+         * @brief When a node received new settings from server and responded with ack
+         * add id and settings update to buffer to be sent on next http request
+         * 
+         * @param id of the node that ackknowledged the updated settings
+         */
+        static void addSettingsAckID(uint32_t id);
+    private:
+        const static String SERVER_IP;
+
+        static DynamicJsonDocument returnDoc;
+        static DynamicJsonDocument outgoingSettings;
+
+        static JsonObject settingsParent;
+        static JsonArray settingsUpdates;
+
+        static HTTPClient http;
+
+        static DeviceSettings* http_local_settings;
+
+        static bool hasAuthed;
+
+        static bool authorise(void);
+        static void uploadSettings(void* args);
+        static bool updateSettings(void);
+        static bool getSettingsToUpdate(void);
+};
 
 #endif

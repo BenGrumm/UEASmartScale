@@ -38,7 +38,7 @@ void setup(){
   #ifdef ROOT
   Serial.println("ROOT Def");
   setupServer(getMeshAPIP());
-  setupHTTP(userScheduler);
+  HTTP_Requests::setupHTTP(userScheduler);
   #endif
   setupBTScan(userScheduler);
 

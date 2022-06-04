@@ -1,17 +1,18 @@
 #include "http_requests.hpp"
 
-double btcPriceGBP = 0;
-DynamicJsonDocument returnDoc(1024);
-DynamicJsonDocument outgoingSettings(2048);
+const String HTTP_Requests::SERVER_IP = "http://192.168.1.100:8000";
 
-JsonObject settingsParent;
-JsonArray settingsUpdates;
+DynamicJsonDocument HTTP_Requests::returnDoc(1024);
+DynamicJsonDocument HTTP_Requests::outgoingSettings(2048);
 
-HTTPClient http;
+JsonObject HTTP_Requests::settingsParent;
+JsonArray HTTP_Requests::settingsUpdates;
 
-DeviceSettings* http_local_settings;
+HTTPClient HTTP_Requests::http;
 
-bool hasAuthed = false;
+DeviceSettings* HTTP_Requests::http_local_settings;
+
+bool HTTP_Requests::hasAuthed = false;
 
 // Task tryAuth(TASK_SECOND * 10, TASK_FOREVER, &tryConnect);
 
@@ -21,7 +22,7 @@ bool hasAuthed = false;
  * 
  * @param userScheduler * was switched to rtos function so no longer needed
  */
-void setupHTTP(Scheduler &userScheduler){
+void HTTP_Requests::setupHTTP(Scheduler &userScheduler){
 
     http_local_settings = DeviceSettings::getInstance();
 
@@ -64,7 +65,7 @@ void setupHTTP(Scheduler &userScheduler){
  * 
  * @param scaleSettings Object containing id of node and rest of settings to update
  */
-void addUpdatedSettings(JsonObject scaleSettings){
+void HTTP_Requests::addUpdatedSettings(JsonObject scaleSettings){
     for(int i = 0; i < settingsUpdates.size(); i++){
         if(settingsUpdates.getElement(i).containsKey("id") && scaleSettings.containsKey("id") && settingsUpdates.getElement(i)["id"] == scaleSettings["id"]){
             // update the object
@@ -100,7 +101,7 @@ void addUpdatedSettings(JsonObject scaleSettings){
  * 
  * @param args all args passed to function (none in this case)
  */
-void uploadSettings(void* args){
+void HTTP_Requests::uploadSettings(void* args){
     for(;;){ // infinite loop
         // Delay for 30s (like calling the task every 30s freeing up the core)
         vTaskDelay(10000 / portTICK_PERIOD_MS);
@@ -130,7 +131,7 @@ void uploadSettings(void* args){
  * 
  * @param id of the node that ackknowledged the updated settings
  */
-void addSettingsAckID(uint32_t id){
+void HTTP_Requests::addSettingsAckID(uint32_t id){
     for(int i = 0; i < settingsUpdates.size(); i++){
         if(settingsUpdates.getElement(i).containsKey("id") && settingsUpdates.getElement(i)["id"] == id){
             settingsUpdates.getElement(i)[UPDATE_SETTINGS_SERVER] = false;
@@ -149,7 +150,7 @@ void addSettingsAckID(uint32_t id){
  * @return true if successful request
  * @return false if error in request (usually unauthorised)
  */
-bool getSettingsToUpdate(void){
+bool HTTP_Requests::getSettingsToUpdate(void){
     if(http_local_settings->jwt != ""){
         http.begin(SERVER_IP + "/core/settings/");
         http.addHeader("Authorization", "JWT " + http_local_settings->jwt);
@@ -184,7 +185,7 @@ bool getSettingsToUpdate(void){
  * @return true if successful request
  * @return false if error in request (usually unauthorised)
  */
-bool updateSettings(void){
+bool HTTP_Requests::updateSettings(void){
     if(settingsUpdates.size() > 0 && http_local_settings->jwt != ""){
         serializeJsonPretty(settingsParent, Serial);
         Serial.println();
@@ -234,7 +235,7 @@ bool updateSettings(void){
  * @return true if successful request got token
  * @return false if error in request or invalid username and password
  */
-bool authorise(void){
+bool HTTP_Requests::authorise(void){
     if(http_local_settings->username != "" && http_local_settings->password != ""){
         http.begin(SERVER_IP + "/token-auth/");
 
@@ -275,6 +276,6 @@ bool authorise(void){
  * @return true is successful request
  * @return false if either no request was made yet or requests havn't been successful
  */
-bool hadSuccessfulLogin(void){
+bool HTTP_Requests::hadSuccessfulLogin(void){
     return hasAuthed;
 }

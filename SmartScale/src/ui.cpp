@@ -338,7 +338,7 @@ void drawMenu(void){
                 lcd.write(byte(1));
             }
 
-            if(hadSuccessfulLogin()){
+            if(HTTP_Requests::hadSuccessfulLogin()){
                 lcd.setCursor(14, 0);
                 lcd.write(byte(0));
             }else{
