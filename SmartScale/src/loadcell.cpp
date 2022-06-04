@@ -119,7 +119,7 @@ void LoadCell::checkNumItemsAndUpdate(void){
     }
 
     if(lastKnownWeight != currentNum){
-        updateNumStored(currentNum);
+        Mesh_Client::updateNumStored(currentNum);
         lastKnownWeight = currentNum;
     }
 }

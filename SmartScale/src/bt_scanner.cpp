@@ -101,10 +101,10 @@ void BT_Scanner::foundDevices(BLEScanResults foundDevices){
 
     if(numScans++ >= 5 && numFound == 4){
         Serial.println("Adding Beacons");
-        addBeacon("beaconOne", devices[0].major, devices[0].minor, devices[0].distance);
-        addBeacon("beaconTwo", devices[1].major, devices[1].minor, devices[1].distance);
-        addBeacon("beaconThree", devices[2].major, devices[2].minor, devices[2].distance);
-        addBeacon("beaconFour", devices[3].major, devices[3].minor, devices[3].distance);
+        Mesh_Client::addBeacon("beaconOne", devices[0].major, devices[0].minor, devices[0].distance);
+        Mesh_Client::addBeacon("beaconTwo", devices[1].major, devices[1].minor, devices[1].distance);
+        Mesh_Client::addBeacon("beaconThree", devices[2].major, devices[2].minor, devices[2].distance);
+        Mesh_Client::addBeacon("beaconFour", devices[3].major, devices[3].minor, devices[3].distance);
         numScans = 0;
         numFound = 0;
     }

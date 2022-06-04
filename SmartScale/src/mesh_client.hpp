@@ -37,106 +37,133 @@
 #define OK_NUM_ITEMS_KEY "okNumItems"
 #define UPDATE_SETTINGS_SERVER "updateSettings"
 
-/**
- * @brief Function to set up the devices mesh client
- * 
- * @param userScheduler the scheduler that the mesh will update on every loop
- */
-void setupMesh(Scheduler &userScheduler);
+class DeviceSettings;
 
-/**
- * @brief Get the Mesh APIP object
- * 
- * @return IPAddress that is used by the mesh
- */
-IPAddress getMeshAPIP(void);
+class Mesh_Client{
+    public:
+        /**
+         * @brief Function to set up the devices mesh client
+         * 
+         * @param userScheduler the scheduler that the mesh will update on every loop
+         */
+        static void setupMesh(Scheduler &userScheduler);
 
-/**
- * @brief Function to call in the arduino loop method
- * 
- */
-void loopMesh(void);
+        /**
+         * @brief Get the Mesh APIP object
+         * 
+         * @return IPAddress that is used by the mesh
+         */
+        static IPAddress getMeshAPIP(void);
 
-/**
- * @brief Get the Num Connected Nodes on network
- * 
- * @return int number of nodes
- */
-int getNumConnectedNodes(void);
+        /**
+         * @brief Function to call in the arduino loop method
+         * 
+         */
+        static void loopMesh(void);
 
-/**
- * @brief update the number of items stored in the buffer object
- * 
- * @param numItems 
- */
-void updateNumStored(unsigned int numItems);
+        /**
+         * @brief Get the Num Connected Nodes on network
+         * 
+         * @return int number of nodes
+         */
+        static int getNumConnectedNodes(void);
 
-/**
- * @brief Functions for updating settings in the buffer object
- * 
- * @param key used to set value in object
- * @param value to set
- */
-void addSettingsItemForMeshToSend(String key, String value);
-void addSettingsItemForMeshToSend(String key, int value);
-void addSettingsItemForMeshToSend(String key, double value);
-void addSettingsItemForMeshToSend(String key, unsigned int value);
+        /**
+         * @brief update the number of items stored in the buffer object
+         * 
+         * @param numItems 
+         */
+        static void updateNumStored(unsigned int numItems);
 
-/**
- * @brief Add a beacon to the updated settings
- * 
- * @param key name of object to create / updated
- * @param major major value of beacon
- * @param minor minor value of beacon
- * @param distance between beacon and device
- */
-void addBeacon(String key, uint8_t major, uint8_t minor, double distance);
+        /**
+         * @brief Functions for updating settings in the buffer object
+         * 
+         * @param key used to set value in object
+         * @param value to set
+         */
+        static void addSettingsItemForMeshToSend(String key, String value);
+        static void addSettingsItemForMeshToSend(String key, int value);
+        static void addSettingsItemForMeshToSend(String key, double value);
+        static void addSettingsItemForMeshToSend(String key, unsigned int value);
 
-/**
- * @brief Send ack to node that the server successfully recevied its settings
- * 
- * @param id of the node to send ack to
- */
-void rootSendUpdateAck(uint32_t id);
+        /**
+         * @brief Add a beacon to the updated settings
+         * 
+         * @param key name of object to create / updated
+         * @param major major value of beacon
+         * @param minor minor value of beacon
+         * @param distance between beacon and device
+         */
+        static void addBeacon(String key, uint8_t major, uint8_t minor, double distance);
 
-/**
- * @brief Function that will iterate through nodes in the mesh and check if current node 
- * has a bridge in the network
- * 
- * @return true if node knows about valid bridge
- * @return false if node knows about no bridge or bridge id not in current network
- */
-bool checkIfBridgeExists(void);
+        /**
+         * @brief Send ack to node that the server successfully recevied its settings
+         * 
+         * @param id of the node to send ack to
+         */
+        static void rootSendUpdateAck(uint32_t id);
 
-/**
- * @brief Send updated settings received from server to node
- * 
- * @param settings json object (must have "id" value)
- */
-void sendSettingsToNode(JsonObject settings);
+        /**
+         * @brief Function that will iterate through nodes in the mesh and check if current node 
+         * has a bridge in the network
+         * 
+         * @return true if node knows about valid bridge
+         * @return false if node knows about no bridge or bridge id not in current network
+         */
+        static bool checkIfBridgeExists(void);
 
-/**
- * @brief Get the mesh id
- * 
- * @return uint32_t id number
- */
-uint32_t getMeshID(void);
+        /**
+         * @brief Send updated settings received from server to node
+         * 
+         * @param settings json object (must have "id" value)
+         */
+        static void sendSettingsToNode(JsonObject settings);
 
-/**
- * @brief check if the bridge has been found and successfully sent to
- * 
- * @return true if bridge found
- * @return false if bridge not yet been found / used
- */
-bool getIfBridgeExists(void);
+        /**
+         * @brief Get the mesh id
+         * 
+         * @return uint32_t id number
+         */
+        static uint32_t getMeshID(void);
 
-// Internal functions
+        /**
+         * @brief check if the bridge has been found and successfully sent to
+         * 
+         * @return true if bridge found
+         * @return false if bridge not yet been found / used
+         */
+        static bool getIfBridgeExists(void);
 
-void sendUpdatedSettings(void);
-void askForBridge(void);
-void ackUpdatedSettings(void);
-void clearSettings(void);
-bool checkIfNodeInNetwork(uint32_t nodeID);
-void receivedCallback(const uint32_t &from, const String &msg);
+        /**
+         * @brief Check if the bridge exists on current network
+         * 
+         * @return true if bridge found
+         * @return false if bridge not found
+         */
+        static bool checkIfNodeInNetwork(uint32_t nodeID);
+    private:
+        static painlessMesh  mesh;
+        static IPAddress myIP;
+        static DeviceSettings* local_mesh_settings;
+
+        static DynamicJsonDocument updatedSettings;
+        #ifdef ROOT
+        static DynamicJsonDocument sentNodeSettings;
+        #endif
+        static bool hasUpdatedSinceLastSend;
+        static bool bridgeExists;
+
+        static JsonObject updatedSettingsObject;
+
+        static Task periodicSettingsUpdates;
+
+        static unsigned int lastNumItemsSent; // Random initializer as value likely to be 0 at setup
+
+        static void sendUpdatedSettings(void);
+        static void askForBridge(void);
+        static void ackUpdatedSettings(void);
+        static void clearSettings(void);
+        static void receivedCallback(const uint32_t &from, const String &msg);
+};
 
 #endif

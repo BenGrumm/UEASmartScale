@@ -300,8 +300,8 @@ void drawMenu(void){
 
         case(MENU_SETTINGS_SERVER_CONFIRM):
             if(isFirstDraw){
-                httpServerOn();
-                String ipAp = getAPIPStr();
+                Settings_Server::httpServerOn();
+                String ipAp = Settings_Server::getAPIPStr();
                 lcd.setCursor((int)(16 - ipAp.length()) / 2, 0);
                 lcd.print(ipAp);
                 lcd.setCursor(0, 1);
@@ -369,7 +369,7 @@ void drawMenu(void){
                 isFirstDraw = false;
             }
 
-            if(getIfBridgeExists()){
+            if(Mesh_Client::getIfBridgeExists()){
                 lcd.setCursor(5, 0);
                 lcd.write(byte(0));
             }else{
@@ -378,7 +378,7 @@ void drawMenu(void){
             }
 
             lcd.setCursor(11, 0);
-            lcd.print(getNumConnectedNodes());
+            lcd.print(Mesh_Client::getNumConnectedNodes());
 
             break;
         case(MENU_SETTINGS_UPDATE_NAME_PASS):
@@ -407,7 +407,7 @@ void drawMenu(void){
                 lcd.setCursor(0, 0);
                 lcd.print("   ");
                 lcd.setCursor(3, 0);
-                lcd.print(getMeshID());
+                lcd.print(Mesh_Client::getMeshID());
                 lcd.setCursor(0, 1);
                 lcd.print("      exit     ");
                 isFirstDraw = false;
@@ -809,7 +809,7 @@ void IRAM_ATTR twoMenuPressed(void){
             drawUI.forceNextIteration();
             break;
         case(MENU_SETTINGS_SERVER_CONFIRM):
-            httpServerOff();
+            Settings_Server::httpServerOff();
             menuState = MENU_SETTINGS_SERVER;
             drawUI.forceNextIteration();
             break;

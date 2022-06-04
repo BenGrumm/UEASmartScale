@@ -163,9 +163,9 @@ bool HTTP_Requests::getSettingsToUpdate(void){
             JsonArray jsonArr = returnDoc.as<JsonArray>();
 
             for(JsonObject obj : jsonArr){
-                if(checkIfNodeInNetwork((uint32_t)obj["id"])){
+                if(Mesh_Client::checkIfNodeInNetwork((uint32_t)obj["id"])){
                     // Send this object to node of id
-                    sendSettingsToNode(obj);
+                    Mesh_Client::sendSettingsToNode(obj);
                 }
             }
 
@@ -211,7 +211,7 @@ bool HTTP_Requests::updateSettings(void){
             for(uint32_t id : updatedIds){
                 Serial.println(id);
                 // TODO ack update to every node returned in list
-                rootSendUpdateAck(id);
+                Mesh_Client::rootSendUpdateAck(id);
             }
 
             return true;

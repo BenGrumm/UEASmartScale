@@ -222,7 +222,7 @@ void DeviceSettings::setNumItemsPerWeightVal(unsigned int numItems, bool updateS
     preferences.putUInt(SETTINGS_NUM_VALUES_PER, numItems);
 
     if(updateServer){
-        addSettingsItemForMeshToSend(NUM_ITEMS_PER_WEIGHT_KEY, numItems);
+        Mesh_Client::addSettingsItemForMeshToSend(NUM_ITEMS_PER_WEIGHT_KEY, numItems);
     }
 
     preferences.end();
@@ -247,7 +247,7 @@ void DeviceSettings::setReferenceWeightOfItems(double itemsWeightGrams, bool upd
     preferences.putDouble(SETTINGS_WEIGHT_REFERENCE, itemsWeightGrams);
 
     if(updateServer){
-        addSettingsItemForMeshToSend(WEIGHT_PER_X_KEY, itemsWeightGrams);
+        Mesh_Client::addSettingsItemForMeshToSend(WEIGHT_PER_X_KEY, itemsWeightGrams);
     }
 
     preferences.end();

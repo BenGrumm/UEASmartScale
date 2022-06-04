@@ -1,28 +1,28 @@
 #include "mesh_client.hpp"
 
-painlessMesh  mesh;
-IPAddress myIP(0,0,0,0);
-DeviceSettings* local_mesh_settings;
+painlessMesh  Mesh_Client::mesh;
+IPAddress Mesh_Client::myIP(0,0,0,0);
+DeviceSettings* Mesh_Client::local_mesh_settings;
 
-DynamicJsonDocument updatedSettings(2048);
+DynamicJsonDocument Mesh_Client::updatedSettings(2048);
 #ifdef ROOT
-DynamicJsonDocument sentNodeSettings(1024);
+DynamicJsonDocument Mesh_Client::sentNodeSettings(1024);
 #endif
-bool hasUpdatedSinceLastSend = false;
-bool bridgeExists = false;
+bool Mesh_Client::hasUpdatedSinceLastSend = false;
+bool Mesh_Client::bridgeExists = false;
 
-JsonObject updatedSettingsObject;
+JsonObject Mesh_Client::updatedSettingsObject;
 
-Task periodicSettingsUpdates(TASK_SECOND * 30, TASK_FOREVER, &sendUpdatedSettings);
+Task Mesh_Client::periodicSettingsUpdates(TASK_SECOND * 30, TASK_FOREVER, &sendUpdatedSettings);
 
-unsigned int lastNumItemsSent = 941; // Random initializer as value likely to be 0 at setup
+unsigned int Mesh_Client::lastNumItemsSent = 941; // Random initializer as value likely to be 0 at setup
 
 /**
  * @brief Function to set up the devices mesh client
  * 
  * @param userScheduler the scheduler that the mesh will update on every loop
  */
-void setupMesh(Scheduler &userScheduler){
+void Mesh_Client::setupMesh(Scheduler &userScheduler){
     local_mesh_settings = DeviceSettings::getInstance();
 
     mesh.setDebugMsgTypes( ERROR | STARTUP | CONNECTION );  // set before init() so that you can see startup messages
@@ -68,7 +68,7 @@ void setupMesh(Scheduler &userScheduler){
  * 
  * @return IPAddress that is used by the mesh
  */
-IPAddress getMeshAPIP(void){
+IPAddress Mesh_Client::getMeshAPIP(void){
     return IPAddress(mesh.getAPIP());
 }
 
@@ -78,7 +78,7 @@ IPAddress getMeshAPIP(void){
  * @param from id of the message sender
  * @param msg message from the sender
  */
-void receivedCallback(const uint32_t &from, const String &msg){
+void Mesh_Client::receivedCallback(const uint32_t &from, const String &msg){
     Serial.printf("bridge: Received from %u msg=%s\n", from, msg.c_str());
     DynamicJsonDocument jsonBuffer(1024 + msg.length());
     deserializeJson(jsonBuffer, msg);
@@ -137,7 +137,7 @@ void receivedCallback(const uint32_t &from, const String &msg){
  * the updates 
  * 
  */
-void clearSettings(void){
+void Mesh_Client::clearSettings(void){
     Serial.println("Clearing settings");
     if(!hasUpdatedSinceLastSend){
         Serial.println("Have Cleared");
@@ -149,7 +149,7 @@ void clearSettings(void){
  * @brief Send an ack notifying received settings to root
  * 
  */
-void ackUpdatedSettings(void){
+void Mesh_Client::ackUpdatedSettings(void){
     if(mesh.isRoot()){
         Serial.println("Is Root Update Ack");
         #ifdef ROOT
@@ -165,7 +165,7 @@ void ackUpdatedSettings(void){
  * 
  * @param jsonSettings json object (must have "id" value)
  */
-void sendSettingsToNode(JsonObject jsonSettings){
+void Mesh_Client::sendSettingsToNode(JsonObject jsonSettings){
     Serial.print("Sending updated settings to node ");
     Serial.println((uint32_t)jsonSettings["id"]);
 
@@ -196,7 +196,7 @@ void sendSettingsToNode(JsonObject jsonSettings){
  * @brief Send updated settings stored in buffer to root if exists
  * 
  */
-void sendUpdatedSettings(void){
+void Mesh_Client::sendUpdatedSettings(void){
     if(updatedSettingsObject.size() > 0 && checkIfBridgeExists()){
         Serial.println("Is Settings To Update And Bridge Exists");
         serializeJsonPretty(updatedSettings, Serial); Serial.println();
@@ -226,7 +226,7 @@ void sendUpdatedSettings(void){
  * 
  * @param id of the node to send ack to
  */
-void rootSendUpdateAck(uint32_t id){
+void Mesh_Client::rootSendUpdateAck(uint32_t id){
     if(id == mesh.getNodeId()){
         clearSettings();
     }else{
@@ -240,7 +240,7 @@ void rootSendUpdateAck(uint32_t id){
  * @return true if bridge found
  * @return false if bridge not found
  */
-bool checkIfBridgeExists(void){
+bool Mesh_Client::checkIfBridgeExists(void){
     if(local_mesh_settings->bridgeID != 0){
         if(checkIfNodeInNetwork(local_mesh_settings->bridgeID)){
             Serial.print("Checked And Found Bridge ID In List - ");
@@ -264,7 +264,7 @@ bool checkIfBridgeExists(void){
  * @return true if node found
  * @return false if node not found
  */
-bool checkIfNodeInNetwork(uint32_t nodeID){
+bool Mesh_Client::checkIfNodeInNetwork(uint32_t nodeID){
     SimpleList<uint32_t> nl = mesh.getNodeList(true);
     SimpleList<uint32_t>::iterator itr = nl.begin();
 
@@ -283,7 +283,7 @@ bool checkIfNodeInNetwork(uint32_t nodeID){
  * 
  * @return uint32_t id number
  */
-uint32_t getMeshID(void){
+uint32_t Mesh_Client::getMeshID(void){
     return mesh.getNodeId();
 }
 
@@ -293,7 +293,7 @@ uint32_t getMeshID(void){
  * @return true if bridge found
  * @return false if bridge not yet been found / used
  */
-bool getIfBridgeExists(void){
+bool Mesh_Client::getIfBridgeExists(void){
     return bridgeExists;
 }
 
@@ -302,7 +302,7 @@ bool getIfBridgeExists(void){
  * 
  * @return int number of nodes
  */
-int getNumConnectedNodes(void){
+int Mesh_Client::getNumConnectedNodes(void){
     return mesh.getNodeList(true).size();
 }
 
@@ -311,7 +311,7 @@ int getNumConnectedNodes(void){
  * 
  * @param numItems 
  */
-void updateNumStored(unsigned int numItems){
+void Mesh_Client::updateNumStored(unsigned int numItems){
     updatedSettingsObject[NUM_STORED_KEY] = numItems;
     hasUpdatedSinceLastSend = true;
 }
@@ -322,19 +322,19 @@ void updateNumStored(unsigned int numItems){
  * @param key used to set value in object
  * @param value to set
  */
-void addSettingsItemForMeshToSend(String key, String value){
+void Mesh_Client::addSettingsItemForMeshToSend(String key, String value){
     updatedSettingsObject[key] = value;
     hasUpdatedSinceLastSend = true;
 }
-void addSettingsItemForMeshToSend(String key, int value){
+void Mesh_Client::addSettingsItemForMeshToSend(String key, int value){
     updatedSettingsObject[key] = value;
     hasUpdatedSinceLastSend = true;
 }
-void addSettingsItemForMeshToSend(String key, double value){
+void Mesh_Client::addSettingsItemForMeshToSend(String key, double value){
     updatedSettingsObject[key] = value;
     hasUpdatedSinceLastSend = true;
 }
-void addSettingsItemForMeshToSend(String key, unsigned int value){
+void Mesh_Client::addSettingsItemForMeshToSend(String key, unsigned int value){
     updatedSettingsObject[key] = value;
     hasUpdatedSinceLastSend = true;
 }
@@ -347,7 +347,7 @@ void addSettingsItemForMeshToSend(String key, unsigned int value){
  * @param minor minor value of beacon
  * @param distance between beacon and device
  */
-void addBeacon(String key, uint8_t major, uint8_t minor, double distance){
+void Mesh_Client::addBeacon(String key, uint8_t major, uint8_t minor, double distance){
 
     JsonObject obj;
 
@@ -366,7 +366,7 @@ void addBeacon(String key, uint8_t major, uint8_t minor, double distance){
  * @brief Broadcast to the network the need to find bridge
  * 
  */
-void askForBridge(void){
+void Mesh_Client::askForBridge(void){
     // TODO replace this with proper enum
     mesh.sendBroadcast("{ \"FIND_BRIDGE\" : true }", true);
 }
@@ -375,6 +375,6 @@ void askForBridge(void){
  * @brief Function to update mesh in main loop
  * 
  */
-void loopMesh(){
+void Mesh_Client::loopMesh(){
     mesh.update();
 }

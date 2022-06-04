@@ -1,11 +1,11 @@
 #include "settings_server.hpp"
 
-AsyncWebServer server(AP_SERVER_PORT);
-IPAddress myAPIP(0,0,0,0);
+AsyncWebServer Settings_Server::server(AP_SERVER_PORT);
+IPAddress Settings_Server::myAPIP(0,0,0,0);
 
-DeviceSettings* settings;
+DeviceSettings* Settings_Server::settings;
 
-char* html = "\
+char* Settings_Server::html = "\
 <form>\
 	<p>WI-FI</p>\
 	<label for='ssid'>SSID:</label><br>\
@@ -26,7 +26,7 @@ char* html = "\
  * 
  * @param meshAPIP ip of the mesh
  */
-void setupServer(IPAddress meshAPIP){
+void Settings_Server::setupServer(IPAddress meshAPIP){
     settings = DeviceSettings::getInstance();
 
     myAPIP = meshAPIP;
@@ -76,7 +76,7 @@ void setupServer(IPAddress meshAPIP){
  * 
  * @return String of the full ip and port number
  */
-String getAPIPStr(void){
+String Settings_Server::getAPIPStr(void){
     return myAPIP.toString() + ":" + String(AP_SERVER_PORT);
 }
 
@@ -84,7 +84,7 @@ String getAPIPStr(void){
  * @brief Function to turn the http server on
  * 
  */
-void httpServerOn(){
+void Settings_Server::httpServerOn(){
     server.begin();
 }
 
@@ -92,6 +92,6 @@ void httpServerOn(){
  * @brief Function to stop hosting the http server
  * 
  */
-void httpServerOff(){
+void Settings_Server::httpServerOff(){
     server.end();
 }
