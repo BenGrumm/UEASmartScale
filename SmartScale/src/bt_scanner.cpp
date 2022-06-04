@@ -1,12 +1,12 @@
 #include "bt_scanner.hpp"
 
-int scanTime = 2; //In seconds
-BLEScan* pBLEScan;
-BeaconInfo devices[4];
-uint8_t numFound = 0;
-uint8_t numScans = 0;
+int BT_Scanner::scanTime = 2; //In seconds
+BLEScan* BT_Scanner::pBLEScan;
+BeaconInfo BT_Scanner::devices[4];
+uint8_t BT_Scanner::numFound = 0;
+uint8_t BT_Scanner::numScans = 0;
 
-void setupBTScan(Scheduler& userScheduler){
+void BT_Scanner::setupBTScan(Scheduler& userScheduler){
     BLEDevice::init("");
     pBLEScan = BLEDevice::getScan(); //create new scan
     pBLEScan->setActiveScan(true); //active scan uses more power, but get results faster
@@ -25,7 +25,7 @@ void setupBTScan(Scheduler& userScheduler){
     );
 }
 
-void foundDevices(BLEScanResults foundDevices){
+void BT_Scanner::foundDevices(BLEScanResults foundDevices){
     Serial.print("Devices found: ");
     Serial.println(foundDevices.getCount());
 
@@ -113,7 +113,7 @@ void foundDevices(BLEScanResults foundDevices){
     pBLEScan->clearResults();   // delete results fromBLEScan buffer to release memory
 }
 
-void scanDevices(void* args){
+void BT_Scanner::scanDevices(void* args){
     while(1){
         // put your main code here, to run repeatedly:
         // BLEScanResults foundDevices = pBLEScan->start(scanTime, false);

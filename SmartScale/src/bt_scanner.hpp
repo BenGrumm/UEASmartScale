@@ -10,16 +10,25 @@
 #include "painlessMesh.h"
 #include "mesh_client.hpp"
 
-void setupBTScan(Scheduler& userScheduler);
-
-void foundDevices(BLEScanResults foundDevices);
-void scanDevices(void* args);
-
 struct BeaconInfo {
     uint8_t major;
     uint8_t minor;
 
     double distance;
+};
+
+class BT_Scanner{
+    public:
+        static void setupBTScan(Scheduler& userScheduler);
+
+        static void foundDevices(BLEScanResults foundDevices);
+        static void scanDevices(void* args);
+    private:
+        static int scanTime; //In seconds
+        static BLEScan* pBLEScan;
+        static BeaconInfo devices[4];
+        static uint8_t numFound;
+        static uint8_t numScans;
 };
 
 #endif
