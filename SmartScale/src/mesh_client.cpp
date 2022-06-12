@@ -167,11 +167,11 @@ void Mesh_Client::ackUpdatedSettings(void){
  */
 void Mesh_Client::sendSettingsToNode(JsonObject jsonSettings){
     Serial.print("Sending updated settings to node ");
-    Serial.println((uint32_t)jsonSettings["id"]);
+    Serial.println((uint32_t)jsonSettings[SCALE_ID_KEY]);
 
     #ifdef ROOT
 
-    if(((uint32_t)jsonSettings["id"]) == mesh.getNodeId()){
+    if(((uint32_t)jsonSettings[SCALE_ID_KEY]) == mesh.getNodeId()){
         Serial.println("ID is me :)");
         local_mesh_settings->updateLocalSettings(jsonSettings);
         ackUpdatedSettings();
@@ -179,7 +179,7 @@ void Mesh_Client::sendSettingsToNode(JsonObject jsonSettings){
     }
 
     sentNodeSettings.clear();
-    JsonObject obj = sentNodeSettings.createNestedObject(UPDATE_SETTINGS);
+    JsonObject obj = sentNodeSettings.createNestedObject(RECIEVED_UPDATED_SETTINGS);
     obj.set(jsonSettings);
 
     String msg;
@@ -187,7 +187,7 @@ void Mesh_Client::sendSettingsToNode(JsonObject jsonSettings){
     serializeJson(sentNodeSettings, msg);
     Serial.println(msg);
 
-    mesh.sendSingle((uint32_t)jsonSettings["id"], msg);
+    mesh.sendSingle((uint32_t)jsonSettings[SCALE_ID_KEY], msg);
 
     #endif
 }
@@ -200,7 +200,7 @@ void Mesh_Client::sendUpdatedSettings(void){
     if(updatedSettingsObject.size() > 0 && checkIfBridgeExists()){
         Serial.println("Is Settings To Update And Bridge Exists");
         serializeJsonPretty(updatedSettings, Serial); Serial.println();
-        updatedSettingsObject["id"] = mesh.getNodeId();
+        updatedSettingsObject[SCALE_ID_KEY] = mesh.getNodeId();
         
         if(local_mesh_settings->bridgeID != mesh.getNodeId()){
             String msg;

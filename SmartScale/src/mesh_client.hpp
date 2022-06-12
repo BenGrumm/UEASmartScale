@@ -30,6 +30,7 @@
 #define ACK_RECEIVED_SETTINGS "ACK_NODE_RECEIVED"          // When a node received new settings from server and it responds ack
 #define SERVER_RECIEVED_SETTINGS "ACK_SERVER_RECEIVED"     // When the server acks your updated settings
 
+#define SCALE_ID_KEY "scaleID"
 #define NUM_STORED_KEY "numStored"
 #define WEIGHT_PER_X_KEY "weightGramsPerXItmes"
 #define NUM_ITEMS_PER_WEIGHT_KEY "numItemsPerWeight"

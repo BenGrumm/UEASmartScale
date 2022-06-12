@@ -26,6 +26,8 @@ void HTTP_Requests::setupHTTP(Scheduler &userScheduler){
 
     http_local_settings = DeviceSettings::getInstance();
 
+    Serial.println("Server Username \"" + http_local_settings->username + "\", Password = \"" + http_local_settings->password + "\"");
+
     settingsParent = outgoingSettings.createNestedObject();
     settingsUpdates = settingsParent.createNestedArray("scales");
     
@@ -67,7 +69,7 @@ void HTTP_Requests::setupHTTP(Scheduler &userScheduler){
  */
 void HTTP_Requests::addUpdatedSettings(JsonObject scaleSettings){
     for(int i = 0; i < settingsUpdates.size(); i++){
-        if(settingsUpdates.getElement(i).containsKey("id") && scaleSettings.containsKey("id") && settingsUpdates.getElement(i)["id"] == scaleSettings["id"]){
+        if(settingsUpdates.getElement(i).containsKey(SCALE_ID_KEY) && scaleSettings.containsKey(SCALE_ID_KEY) && settingsUpdates.getElement(i)[SCALE_ID_KEY] == scaleSettings[SCALE_ID_KEY]){
             // update the object
             if(scaleSettings.containsKey(NUM_STORED_KEY)){
                 settingsUpdates.getElement(i)[NUM_STORED_KEY] = scaleSettings[NUM_STORED_KEY];
@@ -133,14 +135,14 @@ void HTTP_Requests::uploadSettings(void* args){
  */
 void HTTP_Requests::addSettingsAckID(uint32_t id){
     for(int i = 0; i < settingsUpdates.size(); i++){
-        if(settingsUpdates.getElement(i).containsKey("id") && settingsUpdates.getElement(i)["id"] == id){
+        if(settingsUpdates.getElement(i).containsKey(SCALE_ID_KEY) && settingsUpdates.getElement(i)[SCALE_ID_KEY] == id){
             settingsUpdates.getElement(i)[UPDATE_SETTINGS_SERVER] = false;
             return;
         }
     }
     
     JsonObject obj = settingsUpdates.createNestedObject();
-    obj["id"] = id;
+    obj[SCALE_ID_KEY] = id;
     obj[UPDATE_SETTINGS_SERVER] = false;
 }
 
@@ -161,9 +163,11 @@ bool HTTP_Requests::getSettingsToUpdate(void){
         if(result == HTTP_CODE_OK){
             deserializeJson(returnDoc, http.getString());
             JsonArray jsonArr = returnDoc.as<JsonArray>();
-
+            
+            Serial.println("Get ID");
             for(JsonObject obj : jsonArr){
-                if(Mesh_Client::checkIfNodeInNetwork((uint32_t)obj["id"])){
+                Serial.println((uint32_t)obj[SCALE_ID_KEY]);
+                if(Mesh_Client::checkIfNodeInNetwork((uint32_t)obj[SCALE_ID_KEY])){
                     // Send this object to node of id
                     Mesh_Client::sendSettingsToNode(obj);
                 }
