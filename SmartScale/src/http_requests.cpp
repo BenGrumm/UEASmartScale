@@ -3,7 +3,7 @@
 const String HTTP_Requests::SERVER_IP = "http://192.168.1.100:8000";
 
 DynamicJsonDocument HTTP_Requests::returnDoc(1024);
-DynamicJsonDocument HTTP_Requests::outgoingSettings(2048);
+DynamicJsonDocument HTTP_Requests::outgoingSettings(6144);
 
 JsonObject HTTP_Requests::settingsParent;
 JsonArray HTTP_Requests::settingsUpdates;
@@ -191,8 +191,7 @@ bool HTTP_Requests::getSettingsToUpdate(void){
  */
 bool HTTP_Requests::updateSettings(void){
     if(settingsUpdates.size() > 0 && http_local_settings->jwt != ""){
-        serializeJsonPretty(settingsParent, Serial);
-        Serial.println();
+        serializeJsonPretty(settingsParent, Serial); Serial.println();
 
         http.begin(SERVER_IP + "/core/settings/");
         http.addHeader("Authorization", "JWT " + http_local_settings->jwt);
@@ -221,6 +220,8 @@ bool HTTP_Requests::updateSettings(void){
             return true;
         }else if(result == HTTP_CODE_UNAUTHORIZED){
             authorise();
+        }else if(result == HTTP_CODE_BAD_REQUEST){
+            settingsUpdates.clear();
         }
     }else if(http_local_settings->jwt == ""){
         Serial.println("Need Auth");

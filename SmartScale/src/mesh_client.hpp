@@ -10,6 +10,7 @@
 #include <WiFi.h>
 #include <HTTPClient.h>
 #include <ArduinoJson.h>
+#include <mutex>
 
 #ifdef ROOT
 #include "http_requests.hpp"
@@ -97,6 +98,8 @@ class Mesh_Client{
          */
         static void addBeacon(String key, uint8_t major, uint8_t minor, double distance);
 
+        static void addBeacons(uint8_t majors[], uint8_t minors[], double distances[]);
+
         /**
          * @brief Send ack to node that the server successfully recevied its settings
          * 
@@ -143,6 +146,8 @@ class Mesh_Client{
          */
         static bool checkIfNodeInNetwork(uint32_t nodeID);
     private:
+        static const String beaconKeys[];
+
         static painlessMesh  mesh;
         static IPAddress myIP;
         static DeviceSettings* local_mesh_settings;

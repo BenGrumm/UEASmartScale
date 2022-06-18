@@ -4,12 +4,14 @@ painlessMesh  Mesh_Client::mesh;
 IPAddress Mesh_Client::myIP(0,0,0,0);
 DeviceSettings* Mesh_Client::local_mesh_settings;
 
-DynamicJsonDocument Mesh_Client::updatedSettings(2048);
+DynamicJsonDocument Mesh_Client::updatedSettings(4096);
 #ifdef ROOT
-DynamicJsonDocument Mesh_Client::sentNodeSettings(1024);
+DynamicJsonDocument Mesh_Client::sentNodeSettings(2048);
 #endif
 bool Mesh_Client::hasUpdatedSinceLastSend = false;
 bool Mesh_Client::bridgeExists = false;
+
+const String Mesh_Client::beaconKeys[] = {"beaconOne", "beaconTwo", "beaconThree", "beaconFour"};
 
 JsonObject Mesh_Client::updatedSettingsObject;
 
@@ -198,11 +200,12 @@ void Mesh_Client::sendSettingsToNode(JsonObject jsonSettings){
  */
 void Mesh_Client::sendUpdatedSettings(void){
     if(updatedSettingsObject.size() > 0 && checkIfBridgeExists()){
+
         Serial.println("Is Settings To Update And Bridge Exists");
         serializeJsonPretty(updatedSettings, Serial); Serial.println();
         updatedSettingsObject[SCALE_ID_KEY] = mesh.getNodeId();
         
-        if(local_mesh_settings->bridgeID != mesh.getNodeId()){
+        if(local_mesh_settings->bridgeID != mesh.getNodeId() && updatedSettingsObject.containsKey(SCALE_ID_KEY)){
             String msg;
             serializeJson(updatedSettings, msg);
             Serial.println(msg);
@@ -211,7 +214,7 @@ void Mesh_Client::sendUpdatedSettings(void){
             mesh.sendSingle(local_mesh_settings->bridgeID, msg);
         }
         #ifdef ROOT
-        else{
+        else if(local_mesh_settings->bridgeID == mesh.getNodeId()){
             Serial.println("Am Bridge");
             HTTP_Requests::addUpdatedSettings(updatedSettingsObject);
         }
@@ -360,6 +363,34 @@ void Mesh_Client::addBeacon(String key, uint8_t major, uint8_t minor, double dis
     obj["major"] = major;
     obj["minor"] = minor;
     obj["distance"] = distance;
+}
+
+
+/**
+ * @brief Add groupd of beacons to the updated settings
+ * 
+ * @param majors major values of beacon
+ * @param minors minor values of beacon
+ * @param distances between beacons and device
+ */
+void Mesh_Client::addBeacons(uint8_t majors[], uint8_t minors[], double distances[]){
+
+    std::lock_guard<std::mutex> lck(json_settings_mutex);
+
+    for(int i = 0; i < 4; i++){
+
+        JsonObject obj;
+
+        if(updatedSettingsObject.containsKey(beaconKeys[i])){
+            obj = updatedSettingsObject[beaconKeys[i]];
+        }else{
+            obj = updatedSettingsObject.createNestedObject(beaconKeys[i]);
+        }
+
+        obj["major"] = majors[i];
+        obj["minor"] = minors[i];
+        obj["distance"] = distances[i];
+    }
 }
 
 /**
