@@ -10,4 +10,6 @@ To build for a node go to the platformio.ini file and make sure the buildflags h
 
 You may need to check what port the ESP is on and change it in the platformio.ini file
 
+Server ip will also need to be changed in http_requests.hpp
+
 Now if you click build and install the program should upload to your ESP.
