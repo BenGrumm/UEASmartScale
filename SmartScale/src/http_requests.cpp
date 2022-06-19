@@ -16,6 +16,12 @@ bool HTTP_Requests::hasAuthed = false;
 
 // Task tryAuth(TASK_SECOND * 10, TASK_FOREVER, &tryConnect);
 
+void WiFiStationDisconect(WiFiEvent_t event, WiFiEventInfo_t info){
+  Serial.println("Disconect Restarting");
+  ESP.restart();
+}
+
+
 /**
  * @brief Setup json objects used in http_request functions. Create recurrent task on 
  * other core for making requqests.
@@ -49,6 +55,8 @@ void HTTP_Requests::setupHTTP(Scheduler &userScheduler){
 
     // serializeJsonPretty(outgoingSettings, Serial);
     // Serial.println();
+
+    WiFi.onEvent(WiFiStationDisconect, SYSTEM_EVENT_STA_DISCONNECTED);
 
     xTaskCreatePinnedToCore(
         uploadSettings,     // Function that should be called

@@ -46,10 +46,11 @@ void Mesh_Client::setupMesh(Scheduler &userScheduler){
     mesh.setHostname(HOSTNAME);
     // Bridge node, should (in most cases) be a root node. See [the wiki](https://gitlab.com/painlessMesh/painlessMesh/wikis/Possible-challenges-in-mesh-formation) for some background
     mesh.setRoot(true);
-    // This node and all other nodes should ideally know the mesh contains a root, so call this on all nodes
-    mesh.setContainsRoot(true);
 
     #endif
+
+    // This node and all other nodes should ideally know the mesh contains a root, so call this on all nodes
+    mesh.setContainsRoot(true);
 
     updatedSettingsObject = updatedSettings.createNestedObject(UPDATE_SETTINGS);
 
@@ -82,9 +83,15 @@ IPAddress Mesh_Client::getMeshAPIP(void){
  */
 void Mesh_Client::receivedCallback(const uint32_t &from, const String &msg){
     Serial.printf("bridge: Received from %u msg=%s\n", from, msg.c_str());
-    DynamicJsonDocument jsonBuffer(1024 + msg.length());
+    DynamicJsonDocument jsonBuffer(2048 + msg.length());
     deserializeJson(jsonBuffer, msg);
     JsonObject root = jsonBuffer.as<JsonObject>();
+    if(!root.isNull() && root.size() > 0){
+        serializeJsonPretty(root, Serial);
+    }else{
+        Serial.println("Error Parsing MSG stack issue? TODO look at dynamic json document");
+        ESP.restart();
+    }
 
     // If is the root and receives a message asking to find bridge broadcast the
     // id of this bridge
@@ -375,7 +382,7 @@ void Mesh_Client::addBeacon(String key, uint8_t major, uint8_t minor, double dis
  */
 void Mesh_Client::addBeacons(uint8_t majors[], uint8_t minors[], double distances[]){
 
-    std::lock_guard<std::mutex> lck(json_settings_mutex);
+    // std::lock_guard<std::mutex> lck(json_settings_mutex);
 
     for(int i = 0; i < 4; i++){
 
