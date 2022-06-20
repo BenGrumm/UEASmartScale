@@ -1,6 +1,7 @@
 #include "http_requests.hpp"
 
-const String HTTP_Requests::SERVER_IP = "http://192.168.1.100:8000";
+// Change this depending on IPV4 adress of server
+const String HTTP_Requests::SERVER_IP = "http://192.168.17.11:8000";
 
 DynamicJsonDocument HTTP_Requests::returnDoc(1024);
 DynamicJsonDocument HTTP_Requests::outgoingSettings(6144);
@@ -56,7 +57,7 @@ void HTTP_Requests::setupHTTP(Scheduler &userScheduler){
     // serializeJsonPretty(outgoingSettings, Serial);
     // Serial.println();
 
-    WiFi.onEvent(WiFiStationDisconect, SYSTEM_EVENT_STA_DISCONNECTED);
+    // WiFi.onEvent(WiFiStationDisconect, ARDUINO_EVENT_WIFI_AP_STADISCONNECTED);
 
     xTaskCreatePinnedToCore(
         uploadSettings,     // Function that should be called
